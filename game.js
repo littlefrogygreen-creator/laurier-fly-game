@@ -39,9 +39,9 @@
   let pipes = [], parts = [], floaters = [], clouds = [], hills = [];
   let state = 'menu'; // menu | ready | play | dying | over
   let score = 0, best = store.get('laurier_fly_best', 0), groundX = 0, lastCenter = 0, t0 = 0;
-  const GRAV = 1350, FLAP = -440, MAX_FALL = 620;
+  const GRAV = 1600, FLAP = -480, MAX_FALL = 680;
 
-  function speed() { return Math.min(150 + score * 2.5, 330); }
+  function speed() { return Math.min(175 + score * 3, 350); }
   function gap() { return Math.max(235 - score * 2, 140); }
 
   function makeScenery() {
@@ -164,7 +164,7 @@
       pipes = pipes.filter((p) => p.x + p.w > -20);
 
       // collisions (slightly forgiving hitbox)
-      const hx = P.w * 0.32, hy = P.h * 0.32;
+      const hx = P.w * 0.28, hy = P.h * 0.28;
       for (const p of pipes) {
         if (P.x + hx > p.x + 4 && P.x - hx < p.x + p.w - 4) {
           if (P.y - hy < p.top || P.y + hy > p.bot) { die(); break; }
