@@ -39,10 +39,10 @@
   let pipes = [], parts = [], floaters = [], clouds = [], hills = [];
   let state = 'menu'; // menu | ready | play | dying | over
   let score = 0, best = store.get('laurier_fly_best', 0), groundX = 0, lastCenter = 0, t0 = 0;
-  const GRAV = 1750, FLAP = -520;
+  const GRAV = 1350, FLAP = -440, MAX_FALL = 620;
 
-  function speed() { return Math.min(175 + score * 5.5, 380); }
-  function gap() { return Math.max(205 - score * 3.2, 126); }
+  function speed() { return Math.min(150 + score * 2.5, 330); }
+  function gap() { return Math.max(235 - score * 2, 140); }
 
   function makeScenery() {
     clouds = []; hills = [];
@@ -62,7 +62,7 @@
   function addPipe(x) {
     const g = gap(), top = 60, bottom = H - GROUND - 60;
     let c = top + g / 2 + Math.random() * (bottom - top - g);
-    c = Math.max(lastCenter - 170, Math.min(lastCenter + 170, c));
+    c = Math.max(lastCenter - 130, Math.min(lastCenter + 130, c));
     lastCenter = c;
     pipes.push({ x, w: 74, top: c - g / 2, bot: c + g / 2, passed: false, hue: pipes.length % 3 });
   }
@@ -145,7 +145,7 @@
       P.y = H * 0.42 + Math.sin(t0 * 3.2) * 12; P.rot = Math.sin(t0 * 3.2) * .06;
       P.flapT = (Math.sin(t0 * 12) + 1) * .1;
     } else if (state === 'play' || state === 'dying') {
-      P.vy += GRAV * dt; P.y += P.vy * dt;
+      P.vy = Math.min(P.vy + GRAV * dt, MAX_FALL); P.y += P.vy * dt;
       P.rot = Math.max(-0.45, Math.min(1.2, P.vy / 700));
       if (P.y < P.h / 2) { P.y = P.h / 2; P.vy = 0; }
       P.flapT = Math.max(0, P.flapT - dt);
@@ -160,11 +160,11 @@
     if (state === 'play') {
       pipes.forEach((p) => { p.x -= sp * dt; });
       const last = pipes[pipes.length - 1];
-      if (last && last.x < W - 250) addPipe(last.x + 250 + Math.random() * 30);
+      if (last && last.x < W - 280) addPipe(last.x + 280 + Math.random() * 30);
       pipes = pipes.filter((p) => p.x + p.w > -20);
 
       // collisions (slightly forgiving hitbox)
-      const hx = P.w * 0.36, hy = P.h * 0.36;
+      const hx = P.w * 0.32, hy = P.h * 0.32;
       for (const p of pipes) {
         if (P.x + hx > p.x + 4 && P.x - hx < p.x + p.w - 4) {
           if (P.y - hy < p.top || P.y + hy > p.bot) { die(); break; }
