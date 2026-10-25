@@ -41,7 +41,7 @@
   let score = 0, best = store.get('laurier_fly_best', 0), groundX = 0, lastCenter = 0, t0 = 0;
   const GRAV = 1600, FLAP = -480, MAX_FALL = 680;
 
-  function speed() { return Math.min(175 + score * 3, 350); }
+  function speed() { return Math.min(200 + score * 5.5, 380); }
   function gap() { return Math.max(235 - score * 2, 140); }
 
   function makeScenery() {
