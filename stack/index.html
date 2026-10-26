@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#b9ecff">
+<title>Laurier 新包裝層層疊</title>
+<meta name="description" content="Laurier KAO LSSG New Package 小遊戲：撳屏幕將新包裝疊高，疊得越高分數越高，挑戰排行榜！">
+<meta property="og:title" content="Laurier 新包裝層層疊">
+<meta property="og:description" content="將 Laurier 新包裝一層層疊上天，Perfect 有額外加分，衝入十大排行榜！">
+<meta property="og:image" content="assets/new1.png">
+<link rel="icon" href="assets/leaf.png">
+<link rel="apple-touch-icon" href="assets/leaf.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Noto+Sans+HK:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bubbles" aria-hidden="true"></div>
+<canvas id="game" aria-label="遊戲畫面"></canvas>
+
+<button class="icon-btn" id="mute" type="button">🎵</button>
+
+<div id="hud" hidden>
+  <div class="hud-score" id="score">0</div>
+  <div class="hud-sub" id="height">0 層</div>
+  <div class="hud-tip" id="tip">撳屏幕放低包裝！</div>
+</div>
+
+<section class="screen" id="home">
+  <img class="logo" src="assets/logo.png" alt="Laurier">
+  <h1 class="title">Laurier KAO<br>LSSG New Package<small>新包裝 · 層層疊</small></h1>
+  <p class="tagline">將新包裝一層層疊上天！<br>對得準有 <b>Perfect</b> 加分 ✨</p>
+
+  <div class="demo" aria-hidden="true">
+    <img src="assets/new2.png" alt="" class="d3">
+    <img src="assets/new1.png" alt="" class="d2">
+    <img src="assets/new2.png" alt="" class="d1">
+  </div>
+
+  <button class="btn pulse" id="play" type="button">開始遊戲</button>
+  <div class="btn-row">
+    <button class="btn ghost" id="openLb" type="button">🏆 排行榜</button>
+    <button class="btn ghost" id="openHow" type="button">❓ 玩法</button>
+  </div>
+  <p class="foot" id="moreGames"></p>
+</section>
+
+<section class="screen" id="over" hidden>
+  <div class="card pop">
+    <h2 id="overTitle">塌咗！</h2>
+    <div class="sub">今次得分</div>
+    <div class="big-score" id="finalScore">0</div>
+    <div class="sub" id="bestLine">最佳：0</div>
+    <div class="stats" id="stats"></div>
+
+    <form class="submit-form" id="submitForm" novalidate>
+      <div class="fields">
+        <label for="nick">暱稱（會顯示喺排行榜）</label>
+        <input id="nick" name="nick" type="text" maxlength="12" autocomplete="nickname" placeholder="例如：Laurier仔">
+        <label for="phone">手機號碼（唔會公開，只用嚟聯絡得獎者）</label>
+        <input id="phone" name="phone" type="tel" inputmode="numeric" maxlength="8" autocomplete="tel-national" placeholder="8 位數字">
+        <label class="agree"><input type="checkbox" name="agree"> 我同意提供以上資料，只用作排行榜及聯絡得獎者；手機號碼唔會公開顯示。</label>
+        <button class="btn teal small" type="submit">提交分數 🏆</button>
+      </div>
+      <p class="form-msg"></p>
+    </form>
+
+    <div class="btn-row">
+      <button class="btn small" id="again" type="button">再玩一次</button>
+      <button class="btn ghost" id="overLb" type="button">排行榜</button>
+      <button class="btn ghost" id="toHome" type="button">主頁</button>
+    </div>
+  </div>
+</section>
+
+<div class="modal" id="lbModal" hidden>
+  <div class="card pop">
+    <button class="close" type="button" data-close aria-label="關閉">×</button>
+    <h2>🏆 十大排行榜</h2>
+    <div class="sub">新包裝 · 層層疊</div>
+    <ol class="lb" id="lbList"></ol>
+    <p class="lb-note" id="lbNote"></p>
+  </div>
+</div>
+
+<div class="modal" id="howModal" hidden>
+  <div class="card pop how">
+    <button class="close" type="button" data-close aria-label="關閉">×</button>
+    <h2>點樣玩？</h2>
+    <ol>
+      <li>↔️ 新包裝會喺上面左右移動。</li>
+      <li>👆 撳一下屏幕（或者按空白鍵），包裝就會跌落去疊喺頂。</li>
+      <li>🎯 對得啱啱好係 <b>Perfect</b>，多加 1 分；連續 Perfect 仲有額外獎勵！</li>
+      <li>⚠️ 疊歪咗，上面太重偏出下面嘅包裝，成座就會塌。</li>
+      <li>⚡ 越疊越高，包裝移動得越快！</li>
+      <li>🏆 留低暱稱同手機號碼，最高十位上排行榜，有機會獲得獎品！</li>
+    </ol>
+    <button class="btn small" type="button" data-close>明白！</button>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
