@@ -2,7 +2,6 @@
   'use strict';
   const { Audio, store, $, loadBoard, bindSubmit, bindMute, LB } = window.Laurier;
   const GAME = 'fly';
-  const cfg = window.LAURIER_CONFIG || {};
 
   /* ---------- setup ---------- */
   const canvas = $('#game'), ctx = canvas.getContext('2d');
@@ -24,7 +23,7 @@
   const leaf = new Image(); leaf.src = 'assets/leaf.png';
   let skin = store.get('laurier_fly_skin', 'new1');
 
-  if (cfg.otherGameUrl) $('#otherGame').href = cfg.otherGameUrl; else $('#otherGame').parentElement.hidden = true;
+  window.Laurier.renderMoreGames($('#moreGames'), GAME);
 
   // decorative bubbles on the menu
   const bubbles = $('.bubbles');
