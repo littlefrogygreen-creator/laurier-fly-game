@@ -44,13 +44,20 @@
 
   const topY = () => (tower.length ? tower[tower.length - 1].y : 0);
   const below = () => (tower.length ? tower[tower.length - 1] : { x: W / 2, w: BASE.w });
-  function speed() { return Math.min(150 + tower.length * 7, 430); }
+  function speed() { return Math.min(200 + tower.length * 8, 460); }
+  // the pack only swings over a short range around the top of the tower
+  const SWING = BW * 0.9, HOVER = 70;
+  function swingRange() {
+    const c = below().x;
+    return [Math.max(BW / 2 + 8, c - SWING), Math.min(W - BW / 2 - 8, c + SWING)];
+  }
 
   function newBlock() {
     const k = tower.length % 2 ? 'new2' : 'new1';
     const h = BW * ratio(k);
     dir = Math.random() < .5 ? 1 : -1;
-    cur = { k, w: BW, h, x: dir > 0 ? BW / 2 + 8 : W - BW / 2 - 8, y: topY() - h + OVERLAP - 120, vy: 0, rot: 0 };
+    const [lo, hi] = swingRange();
+    cur = { k, w: BW, h, x: dir > 0 ? lo : hi, y: topY() - h + OVERLAP - HOVER, vy: 0, rot: 0 };
   }
 
   function reset() {
@@ -65,7 +72,7 @@
   function drop() {
     if (state === 'ready') { state = 'swing'; $('#tip').hidden = true; return; }
     if (state !== 'swing') return;
-    state = 'drop'; cur.vy = 120;
+    state = 'drop'; cur.vy = 300;
     Audio.sfx('swap');
   }
   canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); drop(); });
@@ -186,13 +193,13 @@
     if (cur && (state === 'swing' || state === 'ready' || state === 'menu')) {
       const sp = state === 'swing' ? speed() : 110;
       cur.x += dir * sp * dt;
-      const lo = cur.w / 2 + 8, hi = W - cur.w / 2 - 8;
+      const [lo, hi] = swingRange();
       if (cur.x < lo) { cur.x = lo; dir = 1; }
       if (cur.x > hi) { cur.x = hi; dir = -1; }
-      cur.y = topY() - cur.h + OVERLAP - 120 + Math.sin(t * 4) * 3;
+      cur.y = topY() - cur.h + OVERLAP - HOVER + Math.sin(t * 4) * 3;
     }
     if (cur && state === 'drop') {
-      cur.vy += 2600 * dt; cur.y += cur.vy * dt;
+      cur.vy += 3400 * dt; cur.y += cur.vy * dt;
       if (cur.y + cur.h - OVERLAP >= topY()) land();
     }
     tower.forEach((q) => { if (q.squash) q.squash = Math.max(0, q.squash - dt); });
