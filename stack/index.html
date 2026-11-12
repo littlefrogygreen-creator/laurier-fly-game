@@ -8,19 +8,20 @@
 <meta name="description" content="Laurier KAO LSSG New Package 小遊戲：撳屏幕將新包裝疊高，疊得越高分數越高，挑戰排行榜！">
 <meta property="og:title" content="Laurier 新包裝層層疊">
 <meta property="og:description" content="將 Laurier 新包裝一層層疊上天，Perfect 有額外加分，衝入十大排行榜！">
-<meta property="og:image" content="assets/new1.png">
-<link rel="icon" href="assets/leaf.png">
-<link rel="apple-touch-icon" href="assets/leaf.png">
+<meta property="og:image" content="../shared/assets/new1.png">
+<link rel="icon" href="../shared/assets/leaf.png">
+<link rel="apple-touch-icon" href="../shared/assets/leaf.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Noto+Sans+HK:wght@500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="../shared/common.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="bubbles" aria-hidden="true"></div>
 <canvas id="game" aria-label="遊戲畫面"></canvas>
 
+<a class="home-btn" id="lobby" href="../">遊戲大廳</a>
 <button class="icon-btn" id="mute" type="button">🎵</button>
 
 <div id="hud" hidden>
@@ -30,14 +31,14 @@
 </div>
 
 <section class="screen" id="home">
-  <img class="logo" src="assets/logo.png" alt="Laurier">
-  <h1 class="title">Laurier KAO<br>LSSG New Package<small>新包裝 · 層層疊</small></h1>
+  <span class="eyebrow">Laurier KAO · LSSG New Package</span>
+  <h1 class="game-title">層層疊<small>新包裝 · 疊上天</small></h1>
   <p class="tagline">將新包裝一層層疊上天！<br>對得準有 <b>Perfect</b> 加分 ✨</p>
 
   <div class="demo" aria-hidden="true">
-    <img src="assets/new2.png" alt="" class="d3">
-    <img src="assets/new1.png" alt="" class="d2">
-    <img src="assets/new2.png" alt="" class="d1">
+    <img src="../shared/assets/new2.png" alt="" class="d3">
+    <img src="../shared/assets/new1.png" alt="" class="d2">
+    <img src="../shared/assets/new2.png" alt="" class="d1">
   </div>
 
   <button class="btn pulse" id="play" type="button">開始遊戲</button>
@@ -45,7 +46,6 @@
     <button class="btn ghost" id="openLb" type="button">🏆 排行榜</button>
     <button class="btn ghost" id="openHow" type="button">❓ 玩法</button>
   </div>
-  <p class="foot" id="moreGames"></p>
 </section>
 
 <section class="screen" id="over" hidden>
@@ -71,7 +71,7 @@
     <div class="btn-row">
       <button class="btn small" id="again" type="button">再玩一次</button>
       <button class="btn ghost" id="overLb" type="button">排行榜</button>
-      <button class="btn ghost" id="toHome" type="button">主頁</button>
+      <a class="btn ghost" href="../">遊戲大廳</a>
     </div>
   </div>
 </section>
@@ -102,8 +102,8 @@
   </div>
 </div>
 
-<script src="config.js"></script>
-<script src="common.js"></script>
+<script src="../shared/config.js"></script>
+<script src="../shared/common.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

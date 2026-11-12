@@ -127,3 +127,58 @@ button { font-family: inherit; cursor: pointer; }
 
 .pop { animation: pop .35s cubic-bezier(.2, 1.6, .5, 1) both; }
 @keyframes pop { from { transform: scale(.6); opacity: 0; } }
+
+/* ---------- brand layer (shared by lobby and games) ---------- */
+:root {
+  --night: #2b2f8f;
+  --night-deep: #1b1d5c;
+  --lav: #c9cbf7;
+  --glass: rgba(255, 255, 255, .78);
+}
+body::before {
+  /* soft ribbons, like the waves printed on the new pack */
+  content: ''; position: fixed; inset: -10% -40%; z-index: 0; pointer-events: none; opacity: .9;
+  background:
+    radial-gradient(60% 18% at 30% 22%, rgba(255,255,255,.75), transparent 70%),
+    radial-gradient(70% 14% at 70% 48%, rgba(120,225,190,.38), transparent 70%),
+    radial-gradient(65% 16% at 35% 76%, rgba(255,255,255,.6), transparent 70%);
+  animation: drift 16s ease-in-out infinite alternate;
+}
+@keyframes drift { from { transform: translateX(-4%) rotate(-5deg); } to { transform: translateX(4%) rotate(-2deg); } }
+
+.eyebrow {
+  display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--teal-dark); background: var(--glass); border-radius: 99px; padding: 4px 12px; margin-bottom: 4px;
+  box-shadow: 0 2px 0 rgba(0,95,104,.12);
+}
+.game-title {
+  margin: 4px 0 2px; text-align: center; line-height: 1.05; text-wrap: balance;
+  font-size: clamp(38px, 12vw, 58px); font-weight: 800; color: var(--teal);
+  text-shadow: 0 3px 0 #fff, 0 7px 0 rgba(0, 95, 104, .16);
+}
+.game-title small { display: block; font-size: .36em; color: var(--green); letter-spacing: 2px; text-shadow: 0 2px 0 #fff; }
+
+.home-btn {
+  position: fixed; z-index: 30; top: max(10px, env(safe-area-inset-top)); left: 10px;
+  height: 44px; padding: 0 14px 0 10px; border-radius: 99px; border: 0;
+  display: inline-flex; align-items: center; gap: 4px; text-decoration: none;
+  font: 800 15px var(--font); color: var(--teal);
+  background: rgba(255,255,255,.9); box-shadow: 0 3px 0 rgba(0,95,104,.2);
+}
+.home-btn::before { content: '‹'; font-size: 26px; line-height: 1; margin-top: -4px; }
+.home-btn:active, .icon-btn:active { transform: translateY(2px); }
+
+.card { background: linear-gradient(180deg, #fff, #f4fffb); }
+.big-score { animation: pop .45s cubic-bezier(.2, 1.6, .5, 1) both; }
+.btn { position: relative; overflow: hidden; }
+.btn::after { /* glossy highlight */
+  content: ''; position: absolute; left: 8%; right: 8%; top: 4px; height: 38%; border-radius: 99px;
+  background: linear-gradient(180deg, rgba(255,255,255,.45), rgba(255,255,255,0)); pointer-events: none;
+}
+.btn.ghost::after { display: none; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  body::before, .bubbles span, .pulse { animation: none !important; }
+}
+.home-btn[hidden] { display: none; }

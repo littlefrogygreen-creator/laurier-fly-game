@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  const { Audio, store, $, loadBoard, bindSubmit, bindMute, LB, renderBoard, renderMoreGames } = window.Laurier;
+  const { Audio, store, $, loadBoard, bindSubmit, bindMute, LB, renderBoard, gfx } = window.Laurier;
   const GAME = 'stack';
 
   /* ---------- setup ---------- */
@@ -17,26 +17,19 @@
   window.addEventListener('resize', resize); resize();
 
   const imgs = {};
-  ['new1', 'new2', 'leaf'].forEach((k) => { const im = new Image(); im.src = 'assets/' + k + '.png'; imgs[k] = im; });
+  ['new1', 'new2', 'leaf'].forEach((k) => { const im = new Image(); im.src = '../shared/assets/' + k + '.png'; imgs[k] = im; });
   const ratio = (k) => (imgs[k].naturalWidth ? imgs[k].naturalHeight / imgs[k].naturalWidth : 0.78);
 
-  renderMoreGames($('#moreGames'), GAME);
-
-  const bubbles = $('.bubbles');
-  for (let i = 0; i < 12; i++) {
-    const s = document.createElement('span'), sz = 14 + Math.random() * 40;
-    s.style.cssText = 'left:' + (Math.random() * 100) + '%;width:' + sz + 'px;height:' + sz + 'px;animation-duration:' + (9 + Math.random() * 10) + 's;animation-delay:-' + (Math.random() * 15) + 's';
-    bubbles.appendChild(s);
-  }
+  window.Laurier.bubbles($('.bubbles'));
 
   /* ---------- state ---------- */
   const BW = 118;           // block width (logical px)
   const OVERLAP = 10;       // the pack's printed top face overlaps the one below
   const PERFECT = 7;
   const BASE = { w: 160 };  // pedestal
-  let tower = [], cur = null, debris = [], parts = [], floaters = [], clouds = [], stars = [];
+  let tower = [], cur = null, debris = [], parts = [], rings = [], dust = [], floaters = [], clouds = [], stars = [];
   let state = 'menu';       // menu | ready | swing | drop | fall | over
-  let score = 0, placed = 0, perfects = 0, streak = 0, bestStreak = 0, camTop = 0, t = 0, dir = 1, shake = 0;
+  let score = 0, placed = 0, perfects = 0, streak = 0, bestStreak = 0, camTop = 0, t = 0, dir = 1, shake = 0, flash = 0, scorePop = 0;
   let best = store.get('laurier_stack_best', 0);
 
   for (let i = 0; i < 40; i++) clouds.push({ x: Math.random() * 1200, y: -Math.random() * 6000 - 60, s: .5 + Math.random() * .9 });
@@ -61,7 +54,7 @@
   }
 
   function reset() {
-    tower = []; debris = []; parts = []; floaters = [];
+    tower = []; debris = []; parts = []; rings = []; dust = []; floaters = [];
     score = 0; placed = 0; perfects = 0; streak = 0; bestStreak = 0;
     camTop = -H * 0.72;
     $('#score').textContent = '0'; $('#height').textContent = '0 層';
@@ -96,12 +89,15 @@
       gain = 2 + (streak >= 3 ? 1 : 0);
       label = streak >= 3 ? 'Perfect ×' + streak + '! +' + gain : 'Perfect! +' + gain;
       Audio.sfx('special');
+      rings.push({ x: cur.x, y: cur.y + cur.h - OVERLAP, t: 0 }); flash = Math.min(.5, .2 + streak * .06);
+      cur.glow = 1;
       for (let i = 0; i < 16; i++) parts.push({ x: cur.x + (Math.random() - .5) * cur.w, y: cur.y + cur.h - OVERLAP, vx: (Math.random() - .5) * 220, vy: -Math.random() * 220, life: .7, c: ['#ffd84d', '#2fb83a', '#ff7eb6', '#4cc1d1'][i % 4] });
     } else {
       streak = 0;
       Audio.sfx('match', 2);
     }
-    cur.squash = 0.18;
+    cur.squash = 0.18; scorePop = 1;
+    for (let i = 0; i < 8; i++) { const sd = i % 2 ? 1 : -1; dust.push({ x: cur.x + sd * cur.w * .42, y: cur.y + cur.h - OVERLAP, vx: sd * (30 + Math.random() * 70), vy: -10 - Math.random() * 30, life: .55, r: 5 + Math.random() * 6 }); }
     tower.push(cur); cur = null; placed++;
     score += gain;
     $('#score').textContent = score; $('#height').textContent = tower.length + ' 層';
@@ -146,7 +142,7 @@
   }
 
   /* ---------- screens ---------- */
-  function show(id) { ['home', 'over'].forEach((s) => { $('#' + s).hidden = s !== id; }); }
+  function show(id) { ['home', 'over'].forEach((s) => { $('#' + s).hidden = s !== id; }); $('#lobby').hidden = id == null; }
 
   function startGame() {
     Audio.unlock(); Audio.start();
@@ -155,7 +151,6 @@
   }
   $('#play').addEventListener('click', startGame);
   $('#again').addEventListener('click', startGame);
-  $('#toHome').addEventListener('click', () => { state = 'menu'; reset(); $('#hud').hidden = true; show('home'); });
 
   function gameOver() {
     state = 'over';
@@ -202,7 +197,12 @@
       cur.vy += 3400 * dt; cur.y += cur.vy * dt;
       if (cur.y + cur.h - OVERLAP >= topY()) land();
     }
-    tower.forEach((q) => { if (q.squash) q.squash = Math.max(0, q.squash - dt); });
+    tower.forEach((q) => { if (q.squash) q.squash = Math.max(0, q.squash - dt); if (q.glow) q.glow = Math.max(0, q.glow - dt * 2); });
+    rings.forEach((r) => { r.t += dt * 2.4; }); rings = rings.filter((r) => r.t < 1);
+    dust.forEach((d) => { d.x += d.vx * dt; d.y += d.vy * dt; d.vx *= (1 - dt * 3); d.life -= dt; }); dust = dust.filter((d) => d.life > 0);
+    if (flash > 0) flash -= dt * 2.5;
+    if (scorePop > 0) scorePop -= dt * 4;
+    $('#score').style.transform = 'scale(' + (1 + Math.max(0, scorePop) * .35) + ')';
     debris.forEach((q) => { q.vy += 1400 * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.rot += q.vr * dt; });
     parts.forEach((q) => { q.vy += 500 * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt; });
     parts = parts.filter((q) => q.life > 0);
@@ -217,20 +217,9 @@
 
   /* ---------- draw ---------- */
   function rr(x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
-  function mix(a, b, k) { return a.map((v, i) => Math.round(v + (b[i] - v) * k)); }
-  const SKY = [[[159, 226, 255], [223, 247, 255]], [[255, 176, 207], [255, 226, 186]], [[64, 52, 140], [190, 120, 190]], [[14, 22, 58], [42, 50, 110]]];
-
-  function skyColors(level) {
-    const k = Math.min(level / 15, SKY.length - 1.001), i = Math.floor(k), f = k - i;
-    return [mix(SKY[i][0], SKY[i + 1][0], f), mix(SKY[i][1], SKY[i + 1][1], f)];
-  }
-
-  function cloud(x, y, s) {
-    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-    ctx.fillStyle = 'rgba(255,255,255,.9)';
-    ctx.beginPath(); ctx.arc(0, 0, 26, 0, 7); ctx.arc(30, -12, 32, 0, 7); ctx.arc(62, 0, 24, 0, 7); ctx.arc(30, 10, 26, 0, 7); ctx.fill();
-    ctx.restore();
-  }
+  // day → sunset → dusk → night as the tower grows
+  const SKY = [[[150, 222, 255], [226, 250, 255]], [[255, 170, 205], [255, 232, 196]], [[92, 82, 190], [226, 170, 214]], [[20, 24, 84], [70, 74, 170]]];
+  let skyK = 0;
 
   function block(q, sway) {
     const im = imgs[q.k];
@@ -238,69 +227,110 @@
     ctx.translate(q.x + (sway || 0), q.y + q.h / 2);
     if (q.rot) ctx.rotate(q.rot);
     if (q.squash) ctx.scale(1 + q.squash * .4, 1 - q.squash * .4);
+    if (q.glow) {   // Perfect: a soft golden halo behind the pack
+      const g = ctx.createRadialGradient(0, 0, q.w * .2, 0, 0, q.w * .95);
+      g.addColorStop(0, 'rgba(255,226,110,' + q.glow * .8 + ')'); g.addColorStop(1, 'rgba(255,226,110,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, q.w * .95, 0, 7); ctx.fill();
+    }
     if (im.complete && im.naturalWidth) ctx.drawImage(im, -q.w / 2, -q.h / 2, q.w, q.h);
     else { ctx.fillStyle = '#7fd8b0'; rr(-q.w / 2, -q.h / 2, q.w, q.h, 8); ctx.fill(); }
     ctx.restore();
   }
 
+  // contact shadow a pack casts on whatever is underneath it
+  function contact(x, y, w, a) {
+    const g = ctx.createRadialGradient(x, y, 2, x, y, w * .55);
+    g.addColorStop(0, 'rgba(0,40,60,' + a + ')'); g.addColorStop(1, 'rgba(0,40,60,0)');
+    ctx.save(); ctx.translate(x, y); ctx.scale(1, .16); ctx.translate(-x, -y);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, w * .55, 0, 7); ctx.fill(); ctx.restore();
+  }
+
   function draw() {
     const level = tower.length;
-    const [c1, c2] = skyColors(level);
+    skyK += (Math.min(level / 14, 3) - skyK) * 0.03;
+    const night = Math.max(0, Math.min(1, skyK - 1.6));
+    const [c1, c2] = gfx.sky(SKY, skyK);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
     g.addColorStop(0, 'rgb(' + c1 + ')'); g.addColorStop(1, 'rgb(' + c2 + ')');
     ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // screen-space layers: stars, moon, brand ribbons
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    if (night > 0) {
+      stars.forEach((s) => { ctx.globalAlpha = night * (.5 + .5 * Math.sin(t * 2 + s.x)); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s.x % W, ((s.y * 0.07 - camTop * 0.05) % H + H) % H, s.r, 0, 7); ctx.fill(); });
+      ctx.globalAlpha = night; ctx.fillStyle = '#f4f5ff'; ctx.beginPath(); ctx.arc(W * .8, 110, 26, 0, 7); ctx.fill();
+      ctx.fillStyle = 'rgb(' + c1 + ')'; ctx.beginPath(); ctx.arc(W * .8 + 11, 103, 22, 0, 7); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    gfx.ribbons(ctx, W, H, t, .32 - night * .14, ['255,255,255', '160,240,215', '255,255,255']);
+
     const sx = shake > 0 ? (Math.random() - .5) * 10 : 0;
     ctx.setTransform(scale, 0, 0, scale, sx * scale, -camTop * scale);
 
-    // stars appear once the tower is high
-    const starA = Math.max(0, Math.min(1, (level - 25) / 15));
-    if (starA > 0) {
-      ctx.fillStyle = 'rgba(255,255,255,' + starA + ')';
-      stars.forEach((s) => { const y = s.y * 0.6 + camTop * 0.4; if (y > camTop - 10 && y < camTop + H + 10) { ctx.beginPath(); ctx.arc(s.x % W, y, s.r, 0, 7); ctx.fill(); } });
-    }
-    clouds.forEach((c) => { const y = c.y * 0.7 + camTop * 0.3; if (y > camTop - 80 && y < camTop + H + 80) cloud((c.x + t * 8 * c.s) % (W + 200) - 100, y, c.s); });
+    clouds.forEach((c) => { const y = c.y * 0.7 + camTop * 0.3; if (y > camTop - 80 && y < camTop + H + 80) gfx.cloud(ctx, (c.x + t * 8 * c.s) % (W + 200) - 100, y, c.s, (.6 + c.s * .3) * (1 - night * .5)); });
 
     // ground + pedestal
     if (camTop + H > -10) {
-      ctx.fillStyle = '#8fdc93'; ctx.beginPath(); ctx.arc(W * .2, 60, 160, Math.PI, 0); ctx.fill();
-      ctx.fillStyle = '#a7e7a0'; ctx.beginPath(); ctx.arc(W * .85, 70, 190, Math.PI, 0); ctx.fill();
-      ctx.fillStyle = '#7ed36f'; ctx.fillRect(-20, 30, W + 40, 600);
-      ctx.fillStyle = '#c6efb5'; ctx.fillRect(-20, 30, W + 40, 6);
+      ctx.fillStyle = '#96e2a3'; ctx.beginPath(); ctx.arc(W * .2, 60, 160, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#aeeba8'; ctx.beginPath(); ctx.arc(W * .85, 70, 190, Math.PI, 0); ctx.fill();
+      const gg = ctx.createLinearGradient(0, 30, 0, 90);
+      gg.addColorStop(0, '#8be07b'); gg.addColorStop(1, '#5fc356');
+      ctx.fillStyle = gg; ctx.fillRect(-20, 30, W + 40, 600);
+      ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(-20, 30, W + 40, 5);
+      contact(W / 2, 46, BASE.w * 1.5, .3);
       const pg = ctx.createLinearGradient(W / 2 - BASE.w / 2, 0, W / 2 + BASE.w / 2, 0);
-      pg.addColorStop(0, '#00838f'); pg.addColorStop(.45, '#19a7b4'); pg.addColorStop(1, '#006b75');
-      ctx.fillStyle = pg; rr(W / 2 - BASE.w / 2, 0, BASE.w, 46, 10); ctx.fill();
+      pg.addColorStop(0, '#00838f'); pg.addColorStop(.4, '#22b3c0'); pg.addColorStop(1, '#005f68');
+      ctx.fillStyle = pg; rr(W / 2 - BASE.w / 2, 0, BASE.w, 46, 12); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.35)'; rr(W / 2 - BASE.w / 2 + 10, 5, BASE.w - 20, 7, 4); ctx.fill();
       ctx.fillStyle = '#fff'; ctx.font = "800 18px 'Baloo 2', sans-serif"; ctx.textAlign = 'center';
-      ctx.fillText('Laurier', W / 2 + 10, 30);
-      if (imgs.leaf.complete && imgs.leaf.naturalWidth) ctx.drawImage(imgs.leaf, W / 2 - 50, 8, 26, 26);
+      ctx.fillText('Laurier', W / 2 + 10, 32);
+      if (imgs.leaf.complete && imgs.leaf.naturalWidth) ctx.drawImage(imgs.leaf, W / 2 - 50, 11, 26, 26);
     }
 
     // tower, with a warning wobble when it is close to tipping
     const inst = instability();
     const wob = inst > 0.55 && state === 'swing' ? Math.sin(t * 9) * (inst - 0.55) * 14 : 0;
-    tower.forEach((q, i) => block(q, wob * (i + 1) / tower.length));
+    tower.forEach((q, i) => {
+      const sw = wob * (i + 1) / tower.length;
+      contact(q.x + sw, q.y + q.h - OVERLAP + 3, q.w, .32);
+      block(q, sw);
+    });
     debris.forEach((q) => block(q));
 
+    dust.forEach((d) => { ctx.globalAlpha = Math.max(0, d.life * 1.3); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(d.x, d.y, d.r * (1.4 - d.life), 0, 7); ctx.fill(); });
+    ctx.globalAlpha = 1;
+    rings.forEach((r) => {
+      ctx.save(); ctx.translate(r.x, r.y); ctx.scale(1, .35);
+      gfx.ring(ctx, 0, 0, 30 + r.t * 120, 1 - r.t, '#ffd84d', 8 * (1 - r.t) + 1);
+      gfx.ring(ctx, 0, 0, 10 + r.t * 80, .9 - r.t, '#ffffff', 4);
+      ctx.restore();
+    });
+
     if (cur && state !== 'menu') {
-      // drop guide
       if (state === 'swing' || state === 'ready') {
-        ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.setLineDash([6, 8]); ctx.lineWidth = 2;
+        // where the pack will land: a shadow on the top of the tower + a guide line
+        const b = below(), off = Math.abs(cur.x - b.x), good = off <= PERFECT;
+        contact(cur.x, topY() + 2, cur.w * (good ? 1.15 : .95), good ? .45 : .28);
+        ctx.strokeStyle = good ? 'rgba(255,216,77,.95)' : 'rgba(255,255,255,.7)'; ctx.setLineDash([6, 8]); ctx.lineWidth = good ? 3 : 2;
         ctx.beginPath(); ctx.moveTo(cur.x, cur.y + cur.h); ctx.lineTo(cur.x, topY()); ctx.stroke(); ctx.setLineDash([]);
+        // little balloon-cloud carrying the pack
+        gfx.cloud(ctx, cur.x - 26, cur.y - 16, .85, .95);
       }
       block(cur);
     }
 
-    parts.forEach((q) => { ctx.globalAlpha = Math.max(0, q.life * 1.4); ctx.fillStyle = q.c; ctx.beginPath(); ctx.arc(q.x, q.y, 4, 0, 7); ctx.fill(); });
-    ctx.globalAlpha = 1;
+    parts.forEach((q) => gfx.sparkle(ctx, q.x, q.y, 7, q.life * 1.4, q.c));
     floaters.forEach((f) => {
       ctx.globalAlpha = Math.max(0, 1 - f.t);
       ctx.font = (f.big ? '800 34px ' : '800 24px ') + "'Baloo 2', 'Noto Sans HK', sans-serif";
-      ctx.textAlign = 'center'; ctx.lineWidth = 5; ctx.strokeStyle = '#fff';
+      ctx.textAlign = 'center'; ctx.lineWidth = 5; ctx.lineJoin = 'round'; ctx.strokeStyle = '#fff';
       ctx.fillStyle = f.big ? '#f06aa5' : f.perfect ? '#e0a800' : '#2fb83a';
       ctx.strokeText(f.text, f.x, f.y); ctx.fillText(f.text, f.x, f.y);
     });
     ctx.globalAlpha = 1;
+
+    if (flash > 0) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = 'rgba(255,244,190,' + Math.min(.5, flash) + ')'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
   }
 
   let last = performance.now();
@@ -312,7 +342,5 @@
   reset();
   requestAnimationFrame(loop);
 
-  let musicOn = false;
-  document.addEventListener('pointerdown', () => { if (!musicOn) { musicOn = true; Audio.unlock(); Audio.start(); } }, true);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) Audio.stopMusic(); else if (musicOn) Audio.start(); });
+  window.Laurier.autoMusic();
 })();

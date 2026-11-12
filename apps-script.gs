@@ -17,6 +17,11 @@ var GAMES = { fly: true, match: true, stack: true };
 
 function doGet(e) {
   var game = (e && e.parameter && e.parameter.game) || 'fly';
+  if (game === 'all') {
+    var boards = {};
+    Object.keys(GAMES).forEach(function (g) { boards[g] = ranking_(g).slice(0, 10).map(publicRow_); });
+    return json_({ ok: true, boards: boards });
+  }
   if (!GAMES[game]) return json_({ ok: false, error: 'bad game' });
   return json_({ ok: true, top: ranking_(game).slice(0, 10).map(publicRow_) });
 }
