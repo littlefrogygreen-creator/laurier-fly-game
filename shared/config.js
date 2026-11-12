@@ -1,4 +1,4 @@
 // 排行榜網址：Google Apps Script 網頁應用程式（見 apps-script.gs）。留空 = 示範模式（只存本機）。
 window.LAURIER_CONFIG = {
-  scriptUrl: '',
+  scriptUrl: 'https://script.google.com/macros/s/AKfycbwzjDJf_zdkGJ4KD31Qu2Co3ayOwRua1xRbOmYsVMl9_8V7IOBj1pWPVt6PgEiy2mpg/exec',
 };
