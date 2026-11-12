@@ -44,7 +44,8 @@
 .t0 .face { background: linear-gradient(160deg, #e9fff4, #b9efd6); }
 .t1 .face { background: linear-gradient(160deg, #eef0ff, #bfc6f5); }
 .t2 .face { background: linear-gradient(160deg, #fff0f6, #ffc6dd); }
-.t3 .face { background: linear-gradient(160deg, #fff3e6, #ffcf9e); }
+.t3 .face { background: linear-gradient(160deg, #ffffff, #fff1c9); }
+.t3 .face img { width: 80%; }
 .t4 .face { background: linear-gradient(160deg, #ffffff, #d9f3f5); }
 .t5 .face { background: linear-gradient(160deg, #fff8dc, #ffe08a); }
 .tile.new-pack .face::after { content: 'NEW'; position: absolute; right: 2px; top: 2px; font-size: 8px; font-weight: 800; color: #fff; background: var(--green); border-radius: 6px; padding: 0 3px; line-height: 12px; }
@@ -138,3 +139,6 @@
 @keyframes comboGlow { 0% { box-shadow: inset 0 0 0 3px #fff, 0 0 0 0 rgba(255,216,77,.9), 0 8px 0 rgba(0,95,104,.16); } 100% { box-shadow: inset 0 0 0 3px #fff, 0 0 0 26px rgba(255,216,77,0), 0 8px 0 rgba(0,95,104,.16); } }
 
 @media (prefers-reduced-motion: reduce) { .tile.hint .face, #play-screen.hurry::after, .upgrade .new, .upgrade .arrow { animation: none; } }
+
+.upgrade .old { align-self: center; }
+.upgrade .old img { width: 96px; height: 76px; }

@@ -17,7 +17,7 @@
   window.addEventListener('resize', resize); resize();
 
   const imgs = {};
-  ['new1', 'new2', 'leaf'].forEach((k) => { const im = new Image(); im.src = '../shared/assets/' + k + '.png'; imgs[k] = im; });
+  ['new1', 'new2', 'leaf'].forEach((k) => { const im = new Image(); im.src = '../shared/assets/' + k + '.png?v=3'; imgs[k] = im; });
   const ratio = (k) => (imgs[k].naturalWidth ? imgs[k].naturalHeight / imgs[k].naturalWidth : 0.78);
 
   window.Laurier.bubbles($('.bubbles'));

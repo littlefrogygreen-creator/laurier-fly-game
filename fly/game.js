@@ -18,8 +18,8 @@
   window.addEventListener('resize', resize); resize();
 
   const skins = {};
-  ['new1', 'new2'].forEach((k) => { const im = new Image(); im.src = '../shared/assets/' + k + '.png'; skins[k] = im; });
-  const leaf = new Image(); leaf.src = '../shared/assets/leaf.png';
+  ['new1', 'new2'].forEach((k) => { const im = new Image(); im.src = '../shared/assets/' + k + '.png?v=3'; skins[k] = im; });
+  const leaf = new Image(); leaf.src = '../shared/assets/leaf.png?v=3';
   let skin = store.get('laurier_fly_skin', 'new1');
 
   window.Laurier.bubbles($('.bubbles'));
@@ -246,7 +246,7 @@
     ctx.save();
     ctx.translate(back ? P.w * 0.12 : -P.w * 0.06, -P.h * 0.32);
     ctx.rotate(0.65 - flapAmt * 5 + (back ? 0.25 : 0));
-    if (back) ctx.scale(0.85, 0.85);
+    ctx.scale(back ? 0.5 : 0.58, back ? 0.5 : 0.58);   // kept small so the wings don't hide the obstacles
     const g = ctx.createLinearGradient(-60, -40, 0, 6);
     g.addColorStop(0, back ? '#bfe9ee' : '#e8fbff'); g.addColorStop(1, back ? '#e2f6f8' : '#ffffff');
     ctx.fillStyle = g; ctx.strokeStyle = '#00838f'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
@@ -274,9 +274,9 @@
     ctx.rotate(P.rot);
     const st = 1 + Math.max(-.08, Math.min(.1, -P.vy / 5200));   // stretch when rising, squash when falling
     ctx.scale(1 / st, st);
-    const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, P.w * .9);
+    const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, P.w * .75);
     glow.addColorStop(0, 'rgba(255,255,255,.75)'); glow.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(0, 0, P.w * .9, 0, 7); ctx.fill();
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(0, 0, P.w * .75, 0, 7); ctx.fill();
     wing(P.flapT, true);
     const im = skins[skin];
     if (im.complete && im.naturalWidth) ctx.drawImage(im, -P.w / 2, -P.h / 2, P.w, P.h);
