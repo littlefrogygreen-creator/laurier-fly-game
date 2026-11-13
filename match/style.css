@@ -142,3 +142,18 @@
 
 .upgrade .old { align-self: center; }
 .upgrade .old img { width: 96px; height: 76px; }
+
+/* start screen: shows the real rule — three identical tiles in a row disappear */
+.howto { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 12px 0 6px; padding: 14px 16px 10px; background: var(--glass); border-radius: 24px; box-shadow: 0 4px 0 rgba(0,95,104,.14); }
+.row3 { position: relative; display: flex; gap: 6px; }
+.tile-demo { position: relative; width: 66px; height: 66px; border-radius: 16px; display: grid; place-items: center; background: linear-gradient(160deg, #e9fff4, #b9efd6); box-shadow: inset 0 -5px 0 rgba(0,0,0,.09), 0 3px 6px rgba(0,60,70,.16); animation: matchPop 2.4s ease-in-out infinite; }
+.tile-demo img { width: 86%; }
+.tile-demo.t-new::after { content: 'NEW'; position: absolute; right: 2px; top: 2px; font-size: 8px; font-weight: 800; color: #fff; background: var(--green); border-radius: 6px; padding: 0 3px; line-height: 12px; }
+.tile-demo:nth-child(2) { animation-delay: .08s; } .tile-demo:nth-child(3) { animation-delay: .16s; }
+@keyframes matchPop { 0%, 55% { transform: none; opacity: 1; } 65% { transform: scale(1.15); box-shadow: 0 0 0 3px var(--yellow), 0 0 16px rgba(255,216,77,.9); } 80% { transform: scale(0); opacity: 0; } 92% { transform: scale(0); opacity: 0; } 100% { transform: none; opacity: 1; } }
+.pop-star { position: absolute; left: 50%; top: 50%; translate: -50% -50%; font-size: 40px; opacity: 0; animation: star 2.4s ease-in-out infinite; pointer-events: none; }
+@keyframes star { 0%, 68% { opacity: 0; scale: .4; } 78% { opacity: 1; scale: 1.2; } 92%, 100% { opacity: 0; scale: 1.5; } }
+.howto-cap { margin: 0; font-weight: 800; color: var(--teal-dark); font-size: 16px; }
+.howto-cap b { color: var(--green); }
+.new-tag { display: inline-block; font-size: 11px; font-weight: 800; color: #fff; background: var(--green); border-radius: 6px; padding: 0 4px; line-height: 16px; vertical-align: 2px; }
+@media (prefers-reduced-motion: reduce) { .tile-demo, .pop-star { animation: none; } }
