@@ -137,6 +137,23 @@
         const r = await withTimeout(fetch(url + '?game=all&_=' + Date.now()), 12000);
         return r.json();
       },
+      /** Wheel prizes, or null when the leaderboard script has no lucky wheel yet. */
+      async prizes() {
+        if (!online) return null;
+        const r = await withTimeout(fetch(url + '?prizes=1&_=' + Date.now()), 12000);
+        const j = await r.json();
+        return j && j.ok && Array.isArray(j.prizes) ? j.prizes : null;
+      },
+      async spinStatus(phone) {
+        if (!online) return { ok: false, error: 'offline' };
+        const r = await withTimeout(fetch(url, { method: 'POST', body: JSON.stringify({ action: 'spinStatus', phone }) }), 15000);
+        return r.json();
+      },
+      async spin(game, phone) {
+        if (!online) return { ok: false, error: 'offline' };
+        const r = await withTimeout(fetch(url, { method: 'POST', body: JSON.stringify({ action: 'spin', game, phone }) }), 20000);
+        return r.json();
+      },
       async submit(game, name, phone, score) {
         if (!online) return localSubmit(game, name, phone, score);
         // text/plain body avoids a CORS preflight, which Apps Script cannot answer
@@ -195,13 +212,25 @@
         msg.textContent = res.rank && res.rank <= 10 ? '恭喜！你而家排第 ' + res.rank + ' 名 🎉' :
           (res.rank ? '已記錄！你排第 ' + res.rank + ' 名，再努力衝入十大！' : '已記錄！');
         form.classList.add('done');
+        // top 10 → offer the lucky wheel (only when the leaderboard script supports it)
+        if (res.canSpin && window.Laurier.Wheel) {
+          let b = $('.spin-cta', form);
+          if (!b) { b = document.createElement('button'); b.type = 'button'; b.className = 'btn spin-cta pulse'; form.appendChild(b); }
+          b.textContent = '🎡 你上咗榜！即刻抽獎'; b.hidden = false;
+          b.onclick = () => window.Laurier.Wheel.openFor(game, res.rank);
+          msg.textContent = '恭喜！你而家排第 ' + res.rank + ' 名，可以抽獎 🎉';
+          return;   // leaderboard stays one tap away; the spin button is the next step
+        }
         onDone(res, name);
       } catch (err) {
         msg.textContent = '提交失敗，請檢查網絡再試';
         btn.disabled = false;
       }
     });
-    return () => { btn.disabled = false; msg.textContent = ''; form.classList.remove('done'); };
+    return () => {
+      btn.disabled = false; msg.textContent = ''; form.classList.remove('done');
+      const b = $('.spin-cta', form); if (b) b.hidden = true;
+    };
   }
 
   /* The three games; `path` is relative to the site root (the game lobby). */

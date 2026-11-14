@@ -90,3 +90,17 @@ body.hub { overflow-x: hidden; overflow-y: auto; height: auto; min-height: 100%;
 html { background: #dff6ff; }
 body.hub { background: transparent; }
 body.hub::after { content: ''; position: fixed; inset: 0; z-index: -1; background: linear-gradient(180deg, #b9ecff 0%, #e4f9ff 55%, #e9fbe9 100%); }
+.spin-banner {
+  width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; margin: 0 0 12px; padding: 12px 14px;
+  border: 3px solid #fff; border-radius: 22px; font-family: var(--font); color: #7a1d4a;
+  background: linear-gradient(135deg, #ffe3f0, #ffc0dc); box-shadow: 0 5px 0 rgba(194,59,119,.22), 0 12px 22px rgba(194,59,119,.18);
+}
+.spin-banner[hidden] { display: none; }
+.spin-banner:active { transform: translateY(3px); }
+.sb-icon { font-size: 34px; animation: spinIcon 4s linear infinite; }
+@keyframes spinIcon { to { rotate: 360deg; } }
+.sb-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sb-text b { font-size: 18px; }
+.sb-text small { font-size: 12.5px; font-weight: 600; color: #8a4a68; }
+.sb-go { flex: none; padding: 8px 16px; border-radius: 99px; font-weight: 800; color: #fff; background: linear-gradient(180deg, #ff8fbe, #f0559a); box-shadow: 0 4px 0 #c23b77; }
+@media (prefers-reduced-motion: reduce) { .sb-icon { animation: none; } }

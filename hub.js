@@ -44,6 +44,15 @@
       list.innerHTML = '<li class="lb-empty">暫時連唔到排行榜，請稍後再試</li>';
     }
   }
+  const wb = $('#openWheel');
+  // the lucky-wheel banner only appears once the sheet has prizes set up
+  if (window.Laurier.Wheel && window.Laurier.Wheel.available()) {
+    LB.prizes().then((p) => {
+      if (!p || !p.length) return;
+      wb.hidden = false; wb.addEventListener('click', () => window.Laurier.Wheel.openLobby());
+    }).catch(() => {});
+  }
+
   paint(); load();
   // coming back from a game (back button) should show fresh scores
   window.addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); });
