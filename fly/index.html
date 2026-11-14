@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Noto+Sans+HK:wght@500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../shared/common.css?v=5">
+<link rel="stylesheet" href="../shared/common.css?v=8">
 <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
@@ -62,11 +62,8 @@
 
     <form class="submit-form" id="submitForm" novalidate>
       <div class="fields">
-        <label for="nick">暱稱（會顯示喺排行榜）</label>
+        <label for="nick">暱稱（會顯示喺排行榜，唔使留電話）</label>
         <input id="nick" name="nick" type="text" maxlength="12" autocomplete="nickname" placeholder="例如：Laurier仔">
-        <label for="phone">手機號碼（唔會公開，只用嚟聯絡得獎者）</label>
-        <input id="phone" name="phone" type="tel" inputmode="numeric" maxlength="8" autocomplete="tel-national" placeholder="8 位數字">
-        <label class="agree"><input type="checkbox" name="agree"> 我同意提供以上資料，只用作排行榜及聯絡得獎者；手機號碼唔會公開顯示。</label>
         <button class="btn teal small" type="submit">提交分數 🏆</button>
       </div>
       <p class="form-msg"></p>
@@ -101,15 +98,15 @@
       <li>🙌 唔撳就會慢慢跌落嚟。</li>
       <li>🌿 每穿過一組障礙物加 1 分。</li>
       <li>⚡ 越飛越快，空位亦會越嚟越窄！</li>
-      <li>🏆 留低暱稱同手機號碼，最高十位上排行榜，有機會獲得獎品！</li>
+      <li>🏆 留低暱稱就可以上排行榜；入咗十大可以轉輪盤抽獎，抽中獎品先需要留電話領獎！</li>
     </ol>
     <button class="btn small" type="button" data-close>明白！</button>
   </div>
 </div>
 
 <script src="../shared/config.js?v=4"></script>
-<script src="../shared/common.js?v=7"></script>
-<script src="../shared/wheel.js?v=7"></script>
+<script src="../shared/common.js?v=8"></script>
+<script src="../shared/wheel.js?v=8"></script>
 <script src="game.js?v=3"></script>
 </body>
 </html>

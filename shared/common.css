@@ -215,3 +215,6 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid 
 .submit-form.done .spin-cta { display: block; }
 .confetti { position: absolute; top: 45%; width: 8px; height: 12px; border-radius: 2px; animation: confetti 1.5s ease-out forwards; pointer-events: none; }
 @keyframes confetti { to { transform: translate(var(--dx), var(--dy)) rotate(var(--r)); opacity: 0; } }
+.wheel-check .agree { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; font-weight: 500; color: #4f6f72; line-height: 1.4; }
+.wheel-check .agree input { width: 18px; height: 18px; margin-top: 2px; flex: none; padding: 0; }
+.link-btn { display: block; width: 100%; margin-top: 10px; border: 0; background: none; font: 600 13px var(--font); color: var(--teal); text-decoration: underline; }
