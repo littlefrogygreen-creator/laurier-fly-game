@@ -5,7 +5,10 @@
   const { Audio, LB, store, esc } = window.Laurier;
 
   const GAME_NAMES = { fly: '飛飛挑戰', match: '消消樂', stack: '層層疊' };
-  const COLORS = ['#2fb83a', '#00838f', '#ff7eb6', '#4a4fc4', '#ffc93c', '#19a7b4', '#8ad16b', '#b38cf0'];
+  const IP = !!window.LAURIER_IP;
+  const COLORS = IP ? ['#ff5c9a', '#b38cf0', '#e0457b', '#ff8fbe', '#9f7ae0', '#f0679e', '#d47fd0', '#ff7a8a']
+                    : ['#2fb83a', '#00838f', '#ff7eb6', '#4a4fc4', '#ffc93c', '#19a7b4', '#8ad16b', '#b38cf0'];
+  const RIM = IP ? '#e0457b' : '#00838f';
   const NO_PRIZE = /多謝|謝謝|再接再厲|下次/;
 
   let modal = null, canvas = null, ctx = null, prizes = [], angle = 0, spinning = false, img = null;
@@ -38,7 +41,7 @@
     const n = prizes.length, S = canvas.width, c = S / 2, R = c - 10 * (S / 320);
     ctx.clearRect(0, 0, S, S);
     // outer rim with bulbs
-    ctx.fillStyle = '#00838f'; ctx.beginPath(); ctx.arc(c, c, R + 8 * (S / 320), 0, 7); ctx.fill();
+    ctx.fillStyle = RIM; ctx.beginPath(); ctx.arc(c, c, R + 8 * (S / 320), 0, 7); ctx.fill();
     for (let i = 0; i < 16; i++) {
       const a = i / 16 * Math.PI * 2, on = (Math.floor(performance.now() / 250) + i) % 2;
       ctx.fillStyle = on ? '#fff6b8' : '#ffffff';
@@ -70,7 +73,7 @@
     ctx.restore();
     // hub
     ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(c, c, 34 * (S / 320), 0, 7); ctx.fill();
-    ctx.strokeStyle = '#00838f'; ctx.lineWidth = 4 * (S / 320); ctx.stroke();
+    ctx.strokeStyle = RIM; ctx.lineWidth = 4 * (S / 320); ctx.stroke();
     if (img.complete && img.naturalWidth) { const s = 44 * (S / 320); ctx.drawImage(img, c - s / 2, c - s / 2, s, s); }
   }
 
@@ -151,11 +154,12 @@
   /** A winner leaves a phone number so the prize can be handed over. */
   function claimView(game, prize) {
     sub(GAME_NAMES[game] + ' · 恭喜你！');
-    show('<p class="wheel-msg wheel-result">🎉 恭喜你抽中<br><b>' + esc(prize) + '</b></p>' +
+    show((IP ? '<img class="ip-art ip-win" src="' + window.LAURIER_IP_ART('win.png') + '" alt="" onerror="this.remove()">' : '') +
+         '<p class="wheel-msg wheel-result">🎉 恭喜你抽中<br><b>' + esc(prize) + '</b></p>' +
          '<form class="wheel-check" novalidate>' +
          '<label for="claimPhone">留低手機號碼領獎（唔會公開，只用嚟聯絡你）</label>' +
          '<input id="claimPhone" type="tel" inputmode="numeric" maxlength="8" placeholder="8 位數字" autocomplete="tel-national">' +
-         '<label class="agree"><input type="checkbox" name="agree"> 我同意提供手機號碼，只用作聯絡得獎者及安排領獎。</label>' +
+         '<label class="agree"><input type="checkbox" name="agree"> 我同意提供手機號碼，只用作聯絡得獎者及安排領獎。每個手機號碼只可以領獎一次。</label>' +
          '<button class="btn teal small" type="submit">確認領獎</button><p class="form-msg"></p>' +
          '<button class="link-btn" type="button" data-later>遲啲先填（可以喺遊戲大廳「上榜即可抽獎」再填）</button></form>');
     const f = body().querySelector('form'), input = f.querySelector('#claimPhone'), agree = f.querySelector('[name=agree]'), m = f.querySelector('.form-msg');
@@ -173,6 +177,11 @@
              '<button class="btn small" type="button" data-x>完成</button>');
         body().querySelector('[data-x]').onclick = () => { modal.hidden = true; };
       } catch (err) {
+        if (err.message === 'already') {
+          show('<p class="wheel-msg">呢個手機號碼已經領過獎。<br><small>每個手機號碼只可以領獎一次，多謝支持！</small></p><button class="btn small" type="button" data-x>好</button>');
+          body().querySelector('[data-x]').onclick = () => { modal.hidden = true; };
+          return;
+        }
         m.textContent = err.message === 'phone' ? '請輸入 8 位數香港手機號碼' : '提交失敗，請檢查網絡再試';
         f.querySelector('[type=submit]').disabled = false;
       }
@@ -200,7 +209,7 @@
   async function openLobby() {
     if (!modal) build();
     modal.hidden = false; spinning = false;
-    sub('入咗任何一款遊戲嘅十大，就可以喺嗰款遊戲抽獎一次。');
+    sub('今日入咗任何一款遊戲嘅十大，就可以喺嗰款遊戲抽獎一次。');
     show('<p class="wheel-msg">查詢緊…</p>');
     try {
       const res = await LB.spinStatus();
@@ -215,7 +224,7 @@
           : '<span class="nope">' + (s.rank ? '排第 ' + s.rank + ' 名，未入十大' : '未上榜') + '</span>';
         return '<li><b>' + GAME_NAMES[g] + '</b>' + state + '</li>';
       }).join('');
-      show('<ul class="spin-list">' + rows + '</ul><p class="lb-note">每款遊戲入十大可以抽一次。抽獎紀錄跟住呢部手機，請用返玩遊戲嗰部手機。</p>');
+      show('<ul class="spin-list">' + rows + '</ul><p class="lb-note">排行榜每日 00:00 重新計，每日入十大可以喺每款遊戲抽一次。每個手機號碼只可以領獎一次。抽獎紀錄跟住呢部手機，請用返玩遊戲嗰部手機。</p>');
       body().querySelectorAll('[data-spin]').forEach((b) => b.addEventListener('click', () => {
         if (!prizes.length) return msg('獎品準備緊，遲啲再嚟抽！');
         wheelView(b.dataset.spin, Number(b.dataset.rank));

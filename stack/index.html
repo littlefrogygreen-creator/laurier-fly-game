@@ -14,8 +14,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Noto+Sans+HK:wght@500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../shared/common.css?v=8">
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="../shared/common.css?v=9">
+<link rel="stylesheet" href="../shared/ip.css?v=9">
+<script src="../shared/ip.js?v=9"></script>
+<link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 <div class="bubbles" aria-hidden="true"></div>
@@ -31,6 +33,7 @@
 </div>
 
 <section class="screen" id="home">
+  <img class="ip-art ip-mascot" data-ip-art="mascot.png" alt="">
   <span class="eyebrow">Laurier KAO · LSSG New Package</span>
   <h1 class="game-title">層層疊<small>新包裝 · 疊上天</small></h1>
   <p class="tagline">將新包裝一層層疊上天！<br>對得準有 <b>Perfect</b> 加分 ✨</p>
@@ -76,7 +79,7 @@
 <div class="modal" id="lbModal" hidden>
   <div class="card pop">
     <button class="close" type="button" data-close aria-label="關閉">×</button>
-    <h2>🏆 十大排行榜</h2>
+    <h2>🏆 今日十大排行榜</h2>
     <div class="sub">新包裝 · 層層疊</div>
     <ol class="lb" id="lbList"></ol>
     <p class="lb-note" id="lbNote"></p>
@@ -100,8 +103,8 @@
 </div>
 
 <script src="../shared/config.js?v=4"></script>
-<script src="../shared/common.js?v=8"></script>
-<script src="../shared/wheel.js?v=8"></script>
-<script src="game.js?v=3"></script>
+<script src="../shared/common.js?v=9"></script>
+<script src="../shared/wheel.js?v=9"></script>
+<script src="game.js?v=9"></script>
 </body>
 </html>

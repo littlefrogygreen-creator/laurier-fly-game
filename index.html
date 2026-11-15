@@ -14,8 +14,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Noto+Sans+HK:wght@500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="shared/common.css?v=8">
-<link rel="stylesheet" href="hub.css?v=5">
+<link rel="stylesheet" href="shared/common.css?v=9">
+<link rel="stylesheet" href="shared/ip.css?v=9">
+<script src="shared/ip.js?v=9"></script>
+<link rel="stylesheet" href="hub.css?v=9">
 </head>
 <body class="hub">
 <div class="bubbles" aria-hidden="true"></div>
@@ -23,6 +25,8 @@
 
 <main class="lobby">
   <header class="hero">
+    <span class="ip-badge ip-only">IP 期間限定版</span>
+    <img class="ip-art ip-mascot" data-ip-art="mascot.png" alt="">
     <img class="logo" src="shared/assets/logo.png?v=3" alt="Laurier">
     <h1 class="title">Laurier KAO<br>LSSG New Package<small>零感特薄 · 全新包裝登場</small></h1>
     <div class="hero-packs" aria-hidden="true">
@@ -82,7 +86,9 @@
   </section>
 
   <section class="board-sec" aria-labelledby="lbTitle">
-    <h2 class="sec-title" id="lbTitle">🏆 十大排行榜</h2>
+    <img class="ip-art ip-corner" data-ip-art="corner.png" alt="">
+    <h2 class="sec-title" id="lbTitle">🏆 今日十大排行榜</h2>
+    <p class="lb-reset">每日香港時間 00:00 重新計分</p>
     <button class="spin-banner" id="openWheel" type="button" hidden>
       <span class="sb-icon" aria-hidden="true">🎡</span>
       <span class="sb-text"><b>上榜即可抽獎！</b><small>入咗任何一款遊戲嘅十大，就可以轉幸運輪盤；用返玩遊戲嗰部手機</small></span>
@@ -103,8 +109,8 @@
 </main>
 
 <script src="shared/config.js?v=4"></script>
-<script src="shared/common.js?v=8"></script>
-<script src="shared/wheel.js?v=8"></script>
-<script src="hub.js?v=8"></script>
+<script src="shared/common.js?v=9"></script>
+<script src="shared/wheel.js?v=9"></script>
+<script src="hub.js?v=9"></script>
 </body>
 </html>

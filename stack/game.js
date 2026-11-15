@@ -2,6 +2,7 @@
   'use strict';
   const { Audio, store, $, loadBoard, bindSubmit, bindMute, LB, renderBoard, gfx } = window.Laurier;
   const GAME = 'stack';
+  const IP = !!window.LAURIER_IP;   // IP 期間限定版: pink sky, gingham pedestal, hearts
 
   /* ---------- setup ---------- */
   const canvas = $('#game'), ctx = canvas.getContext('2d');
@@ -91,7 +92,7 @@
       Audio.sfx('special');
       rings.push({ x: cur.x, y: cur.y + cur.h - OVERLAP, t: 0 }); flash = Math.min(.5, .2 + streak * .06);
       cur.glow = 1;
-      for (let i = 0; i < 16; i++) parts.push({ x: cur.x + (Math.random() - .5) * cur.w, y: cur.y + cur.h - OVERLAP, vx: (Math.random() - .5) * 220, vy: -Math.random() * 220, life: .7, c: ['#ffd84d', '#2fb83a', '#ff7eb6', '#4cc1d1'][i % 4] });
+      for (let i = 0; i < 16; i++) parts.push({ x: cur.x + (Math.random() - .5) * cur.w, y: cur.y + cur.h - OVERLAP, vx: (Math.random() - .5) * 220, vy: -Math.random() * 220, life: .7, c: (IP ? ['#ff5c9a', '#ffd84d', '#ffb3cf', '#c9a5ff'] : ['#ffd84d', '#2fb83a', '#ff7eb6', '#4cc1d1'])[i % 4] });
     } else {
       streak = 0;
       Audio.sfx('match', 2);
@@ -218,7 +219,9 @@
   /* ---------- draw ---------- */
   function rr(x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
   // day → sunset → dusk → night as the tower grows
-  const SKY = [[[150, 222, 255], [226, 250, 255]], [[255, 170, 205], [255, 232, 196]], [[92, 82, 190], [226, 170, 214]], [[20, 24, 84], [70, 74, 170]]];
+  const SKY = IP
+    ? [[[255, 200, 224], [255, 241, 247]], [[255, 168, 204], [255, 226, 210]], [[214, 120, 190], [255, 186, 220]], [[86, 44, 120], [176, 96, 170]]]
+    : [[[150, 222, 255], [226, 250, 255]], [[255, 170, 205], [255, 232, 196]], [[92, 82, 190], [226, 170, 214]], [[20, 24, 84], [70, 74, 170]]];
   let skyK = 0;
 
   function block(q, sway) {
@@ -263,7 +266,7 @@
       ctx.fillStyle = 'rgb(' + c1 + ')'; ctx.beginPath(); ctx.arc(W * .8 + 11, 103, 22, 0, 7); ctx.fill();
       ctx.globalAlpha = 1;
     }
-    gfx.ribbons(ctx, W, H, t, .32 - night * .14, ['255,255,255', '160,240,215', '255,255,255']);
+    gfx.ribbons(ctx, W, H, t, .32 - night * .14, IP ? ['255,255,255', '255,170,205', '255,255,255'] : ['255,255,255', '160,240,215', '255,255,255']);
 
     const sx = shake > 0 ? (Math.random() - .5) * 10 : 0;
     ctx.setTransform(scale, 0, 0, scale, sx * scale, -camTop * scale);
@@ -272,16 +275,23 @@
 
     // ground + pedestal
     if (camTop + H > -10) {
-      ctx.fillStyle = '#96e2a3'; ctx.beginPath(); ctx.arc(W * .2, 60, 160, Math.PI, 0); ctx.fill();
-      ctx.fillStyle = '#aeeba8'; ctx.beginPath(); ctx.arc(W * .85, 70, 190, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = IP ? '#ffc4dc' : '#96e2a3'; ctx.beginPath(); ctx.arc(W * .2, 60, 160, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = IP ? '#ffd6e6' : '#aeeba8'; ctx.beginPath(); ctx.arc(W * .85, 70, 190, Math.PI, 0); ctx.fill();
       const gg = ctx.createLinearGradient(0, 30, 0, 90);
-      gg.addColorStop(0, '#8be07b'); gg.addColorStop(1, '#5fc356');
+      gg.addColorStop(0, IP ? '#ffa3c7' : '#8be07b'); gg.addColorStop(1, IP ? '#f27ba6' : '#5fc356');
       ctx.fillStyle = gg; ctx.fillRect(-20, 30, W + 40, 600);
       ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(-20, 30, W + 40, 5);
       contact(W / 2, 46, BASE.w * 1.5, .3);
       const pg = ctx.createLinearGradient(W / 2 - BASE.w / 2, 0, W / 2 + BASE.w / 2, 0);
-      pg.addColorStop(0, '#00838f'); pg.addColorStop(.4, '#22b3c0'); pg.addColorStop(1, '#005f68');
+      if (IP) { pg.addColorStop(0, '#e0457b'); pg.addColorStop(.4, '#ff7eb0'); pg.addColorStop(1, '#b8325f'); }
+      else { pg.addColorStop(0, '#00838f'); pg.addColorStop(.4, '#22b3c0'); pg.addColorStop(1, '#005f68'); }
       ctx.fillStyle = pg; rr(W / 2 - BASE.w / 2, 0, BASE.w, 46, 12); ctx.fill();
+      if (IP) {   // gingham on the pedestal
+        ctx.save(); rr(W / 2 - BASE.w / 2, 0, BASE.w, 46, 12); ctx.clip(); ctx.fillStyle = 'rgba(255,255,255,.18)';
+        for (let x = W / 2 - BASE.w / 2; x < W / 2 + BASE.w / 2; x += 16) ctx.fillRect(x, 0, 8, 46);
+        for (let y = 0; y < 46; y += 16) ctx.fillRect(W / 2 - BASE.w / 2, y, BASE.w, 8);
+        ctx.restore();
+      }
       ctx.fillStyle = 'rgba(255,255,255,.35)'; rr(W / 2 - BASE.w / 2 + 10, 5, BASE.w - 20, 7, 4); ctx.fill();
       ctx.fillStyle = '#fff'; ctx.font = "800 18px 'Baloo 2', sans-serif"; ctx.textAlign = 'center';
       ctx.fillText('Laurier', W / 2 + 10, 32);

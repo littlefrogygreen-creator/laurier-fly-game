@@ -1,0 +1,148 @@
+/* IP 期間限定版: pink gingham, polka dots, bows and hearts. Only applies when <html class="ip">. */
+:root {
+  --ip-bow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Cpath d='M30 19C22 4 6 2 3 10s6 19 27 11z' fill='%23ff9cc2' stroke='%23e0457b' stroke-width='2.5' stroke-linejoin='round'/%3E%3Cpath d='M34 19C42 4 58 2 61 10s-6 19-27 11z' fill='%23ff9cc2' stroke='%23e0457b' stroke-width='2.5' stroke-linejoin='round'/%3E%3Cpath d='M28 22l-9 15h8l5-8 5 8h8l-9-15z' fill='%23ff9cc2' stroke='%23e0457b' stroke-width='2.5' stroke-linejoin='round'/%3E%3Ccircle cx='32' cy='20' r='6.5' fill='%23ffc4da' stroke='%23e0457b' stroke-width='2.5'/%3E%3Cpath d='M12 9c4-2 8 0 11 4' stroke='%23fff' stroke-width='2' fill='none' stroke-linecap='round' opacity='.8'/%3E%3C/svg%3E");
+  --ip-heart: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 30'%3E%3Cpath d='M16 29S1 19.5 1 9.5C1 4.8 4.6 1 9 1c3 0 5.6 1.7 7 4.2C17.4 2.7 20 1 23 1c4.4 0 8 3.8 8 8.5C31 19.5 16 29 16 29z' fill='%23ff8fb8'/%3E%3Cellipse cx='9' cy='8' rx='3.5' ry='2.2' fill='%23fff' opacity='.7' transform='rotate(-30 9 8)'/%3E%3C/svg%3E");
+}
+
+/* --- the switch (always visible) --- */
+.ip-switch {
+  position: fixed; z-index: 70; left: max(10px, env(safe-area-inset-left)); bottom: max(10px, env(safe-area-inset-bottom));
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 8px; border: 0; border-radius: 99px;
+  font: 800 13px var(--font); letter-spacing: 1px; color: #6c8b8e; background: rgba(255,255,255,.88);
+  box-shadow: 0 2px 0 rgba(0,0,0,.12); cursor: pointer;
+}
+.ip-switch .ip-dot { width: 14px; height: 14px; border-radius: 50%; background: #c9d6d8; box-shadow: inset 0 0 0 2px #fff; }
+.ip-switch.on { color: #fff; background: linear-gradient(180deg, #ff8fbe, #e0457b); box-shadow: 0 2px 0 #b8325f; }
+.ip-switch.on .ip-dot { background: #fff; }
+
+/* artwork slots: only in IP mode */
+.ip-art, .ip-only { display: none !important; }
+html.ip .ip-art, html.ip .ip-only { display: revert !important; }
+
+/* --- palette --- */
+html.ip {
+  --teal: #e0457b; --teal-dark: #b8325f; --green: #ff5c9a; --green-light: #ffd3e4;
+  --mint: #fff0f6; --sky: #ffe3ef; --pink: #ff7eb6; --glass: rgba(255,255,255,.82);
+  --card-shadow: 0 6px 0 rgba(184,50,95,.18), 0 14px 30px rgba(184,50,95,.18);
+  background: #ffe9f2;
+}
+html.ip body {
+  color: #5b2a3f;
+  background:
+    radial-gradient(circle, rgba(255,255,255,.75) 2.2px, transparent 2.6px) 0 0 / 22px 22px,
+    linear-gradient(180deg, #ffd6e7 0%, #ffeaf3 55%, #fff6fa 100%);
+}
+html.ip body::before {
+  background:
+    radial-gradient(60% 18% at 30% 22%, rgba(255,255,255,.7), transparent 70%),
+    radial-gradient(70% 14% at 70% 48%, rgba(255,160,200,.35), transparent 70%),
+    radial-gradient(65% 16% at 35% 76%, rgba(255,255,255,.55), transparent 70%);
+}
+html.ip body.hub::after { background: radial-gradient(circle, rgba(255,255,255,.75) 2.2px, transparent 2.6px) 0 0 / 22px 22px, linear-gradient(180deg, #ffd6e7 0%, #ffeaf3 55%, #fff6fa 100%); }
+
+/* floating bubbles become hearts */
+html.ip .bubbles span { border: 0; border-radius: 0; background: var(--ip-heart) center / contain no-repeat; opacity: .75; }
+
+/* titles */
+html.ip .title, html.ip .game-title { color: #e0457b; text-shadow: 0 3px 0 #fff, 0 7px 0 rgba(184,50,95,.16); }
+html.ip .title small, html.ip .game-title small { color: #ff5c9a; }
+html.ip .eyebrow { color: #b8325f; }
+html.ip .eyebrow::after { content: ' · 期間限定'; color: #ff5c9a; }
+html.ip .eyebrow { position: relative; padding-left: 38px; }
+html.ip .eyebrow::before { content: ''; position: absolute; left: 8px; top: 50%; width: 24px; height: 16px; translate: 0 -50%; background: var(--ip-bow) center / contain no-repeat; }
+
+/* buttons */
+html.ip .btn { background: linear-gradient(180deg, #ff8fbe, #f0559a); box-shadow: 0 6px 0 #c23b77, 0 12px 20px rgba(194,59,119,.32); }
+html.ip .btn:active { box-shadow: 0 2px 0 #c23b77; }
+html.ip .btn.teal { background: linear-gradient(180deg, #f06aa5, #d23f78); box-shadow: 0 6px 0 #a52c5c, 0 12px 20px rgba(165,44,92,.3); }
+html.ip .btn.ghost { background: #fff; color: #e0457b; box-shadow: 0 5px 0 rgba(184,50,95,.22); }
+html.ip .home-btn, html.ip .icon-btn { color: #e0457b; box-shadow: 0 3px 0 rgba(184,50,95,.22); }
+
+/* cards and modals: white with a pink gingham band and a bow on top */
+html.ip .card {
+  background:
+    linear-gradient(rgba(255,255,255,.94), rgba(255,255,255,.94)) padding-box,
+    repeating-linear-gradient(0deg, rgba(255,143,184,.35) 0 8px, transparent 8px 16px),
+    repeating-linear-gradient(90deg, rgba(255,143,184,.35) 0 8px, #fff 8px 16px);
+  border: 6px solid transparent; background-clip: padding-box, border-box, border-box;
+}
+html.ip .card::before {
+  content: ''; position: absolute; left: 50%; top: -24px; width: 60px; height: 38px; translate: -50% 0; z-index: 1;
+  background: var(--ip-bow) center / contain no-repeat; pointer-events: none;
+}
+html.ip .modal { background: rgba(120,30,70,.3); }
+html.ip #over { background: rgba(120,30,70,.25); }
+
+/* leaderboard */
+html.ip .lb li { background: #fff0f6; }
+html.ip .lb li:nth-child(1) { background: #ffe1ee; }
+html.ip .lb li:nth-child(2) { background: #fff3f8; }
+html.ip .lb li:nth-child(3) { background: #ffeef1; }
+html.ip .lb li.me { outline-color: #ff5c9a; }
+html.ip .lb .sc { color: #e0457b; }
+html.ip .big-score { color: #ff5c9a; text-shadow: 0 4px 0 #ffd3e4; }
+html.ip .submit-form input[type=text] { border-color: #ffc4da; background: #fff8fb; }
+html.ip .submit-form input:focus { border-color: #e0457b; }
+html.ip .spin-list li { background: #fff0f6; }
+
+/* ---------- lobby ---------- */
+html.ip .hero { position: relative; }
+html.ip .ip-badge {
+  display: inline-block !important; margin: 0 0 6px; padding: 5px 16px 5px 34px; border-radius: 99px;
+  font-weight: 800; font-size: 14px; letter-spacing: 1px; color: #fff;
+  background: var(--ip-heart) 10px center / 18px no-repeat, linear-gradient(180deg, #ff8fbe, #e0457b);
+  box-shadow: 0 3px 0 #b8325f;
+}
+html.ip .ip-mascot { display: block !important; width: min(170px, 44vw); margin: -6px auto 4px; filter: drop-shadow(0 8px 10px rgba(184,50,95,.25)); }
+html.ip .chips li { color: #b8325f; box-shadow: 0 3px 0 rgba(184,50,95,.14); }
+html.ip .chips b { color: #ff5c9a; }
+html.ip .sec-title { color: #b8325f; }
+html.ip .game-card { border-color: #fff; box-shadow: 0 6px 0 rgba(184,50,95,.16), 0 14px 26px rgba(184,50,95,.16); }
+html.ip .g-fly { background: repeating-linear-gradient(0deg, rgba(255,255,255,.35) 0 10px, transparent 10px 20px), repeating-linear-gradient(90deg, rgba(255,255,255,.35) 0 10px, transparent 10px 20px), linear-gradient(135deg, #ffd9e8, #ffb3d0); }
+html.ip .g-match { background: radial-gradient(circle, rgba(255,255,255,.7) 2.5px, transparent 3px) 0 0 / 18px 18px, linear-gradient(135deg, #ffe9f2, #ffc4dc); }
+html.ip .g-stack { background: repeating-linear-gradient(90deg, rgba(255,255,255,.45) 0 12px, transparent 12px 24px), linear-gradient(135deg, #ffe0ee, #f7b7d6); }
+html.ip .game-card h3, html.ip .g-match h3, html.ip .g-stack h3 { color: #c2386c; }
+html.ip .game-card::after { content: ''; position: absolute; right: 10px; top: 8px; width: 34px; height: 22px; background: var(--ip-bow) center / contain no-repeat; }
+html.ip .go { background: linear-gradient(180deg, #ff8fbe, #f0559a); box-shadow: 0 5px 0 #c23b77, 0 10px 16px rgba(194,59,119,.3); }
+html.ip .g-fly .wing { border-color: #e0457b; }
+html.ip .tabs { box-shadow: 0 3px 0 rgba(184,50,95,.12); }
+html.ip .tab { color: #b8325f; }
+html.ip .tab.on { background: linear-gradient(180deg, #ff8fbe, #e0457b); box-shadow: 0 3px 0 #b8325f; }
+html.ip .board-sec { position: relative; }
+html.ip .ip-corner { display: block !important; position: absolute; right: -4px; top: -26px; width: 82px; pointer-events: none; }
+
+/* ---------- fly ---------- */
+html.ip .pick-item { color: #b8325f; }
+html.ip .pick-item.on { border-color: #ff5c9a; box-shadow: 0 8px 0 rgba(255,92,154,.3); }
+html.ip .hud-score { text-shadow: 0 4px 0 #e0457b, 0 0 2px #e0457b, 3px 0 0 #e0457b, -3px 0 0 #e0457b, 0 -3px 0 #e0457b; }
+html.ip .hud-tip, html.ip .hud-sub { color: #e0457b; }
+
+/* ---------- match ---------- */
+html.ip .howto, html.ip .hud-box { box-shadow: 0 4px 0 rgba(184,50,95,.14); }
+html.ip .hud-box { background: linear-gradient(180deg, #fff, #fff0f6); }
+html.ip .hud-box .val, html.ip #timeText, html.ip .howto-cap { color: #e0457b; }
+html.ip .timebar i { background: linear-gradient(90deg, #ff8fbe, #ffc4da); }
+html.ip .board {
+  background: radial-gradient(circle, rgba(255,255,255,.8) 2.5px, transparent 3px) 0 0 / 20px 20px, linear-gradient(160deg, rgba(255,214,231,.85), rgba(255,236,244,.75));
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.95), 0 8px 0 rgba(184,50,95,.16), 0 22px 44px rgba(184,50,95,.2);
+}
+html.ip .cell-bg { background: rgba(255,255,255,.6); }
+html.ip .t0 .face { background: linear-gradient(160deg, #ffffff, #ffd9e8); }
+html.ip .t1 .face { background: linear-gradient(160deg, #fff4fa, #f6c5e0); }
+html.ip .t2 .face { background: linear-gradient(160deg, #ffffff, #ffe6cf); }
+html.ip .t3 .face { background: linear-gradient(160deg, #ffffff, #e9e2ff); }
+html.ip .t4 .face { background: linear-gradient(160deg, #ffffff, #dff5ea); }
+html.ip .t5 .face { background: linear-gradient(160deg, #fff7d6, #ffe08a); }
+html.ip .tile.new-pack .face::after, html.ip .tile-demo.t-new::after, html.ip .new-tag { background: linear-gradient(180deg, #ff8fbe, #e0457b); }
+html.ip .tile-demo { background: linear-gradient(160deg, #ffffff, #ffd9e8); }
+html.ip .tagline b { color: #ff5c9a; }
+html.ip #play-screen.hurry::after { box-shadow: inset 0 0 60px 10px rgba(224,69,123,.55); }
+
+/* ---------- stack ---------- */
+html.ip .demo img { filter: drop-shadow(0 3px 0 rgba(184,50,95,.18)); }
+
+/* ---------- lucky wheel ---------- */
+html.ip .wheel-pointer { border-top-color: #e0457b; }
+html.ip .spin-banner { background: repeating-linear-gradient(0deg, rgba(255,255,255,.3) 0 9px, transparent 9px 18px), repeating-linear-gradient(90deg, rgba(255,255,255,.3) 0 9px, transparent 9px 18px), linear-gradient(135deg, #ffd3e6, #ffa9cd); }
+html.ip .ip-win { display: block !important; width: 120px; margin: 0 auto -6px; }
+.screen .ip-mascot, html.ip .screen .ip-mascot { width: min(120px, 30vw) !important; margin: 0 auto 2px !important; }
