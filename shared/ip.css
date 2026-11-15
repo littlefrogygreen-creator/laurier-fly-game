@@ -146,3 +146,9 @@ html.ip .wheel-pointer { border-top-color: #e0457b; }
 html.ip .spin-banner { background: repeating-linear-gradient(0deg, rgba(255,255,255,.3) 0 9px, transparent 9px 18px), repeating-linear-gradient(90deg, rgba(255,255,255,.3) 0 9px, transparent 9px 18px), linear-gradient(135deg, #ffd3e6, #ffa9cd); }
 html.ip .ip-win { display: block !important; width: 120px; margin: 0 auto -6px; }
 .screen .ip-mascot, html.ip .screen .ip-mascot { width: min(120px, 30vw) !important; margin: 0 auto 2px !important; }
+
+/* IP character peeking over the match-3 board */
+html.ip .ip-peek { display: block !important; position: absolute; z-index: 6; right: -8px; top: -46px; width: 92px; pointer-events: none; filter: drop-shadow(0 4px 4px rgba(184,50,95,.25)); }
+html.ip .hud { position: relative; z-index: 7; }
+/* IP character on the game-over card */
+html.ip #over .card::after { content: ''; position: absolute; left: -18px; bottom: -14px; width: 84px; height: 72px; background: url('ip/win.png') center / contain no-repeat; pointer-events: none; }

@@ -22,6 +22,8 @@
   ['new1', 'new2'].forEach((k) => { const im = new Image(); im.src = '../shared/assets/' + k + '.png?v=3'; skins[k] = im; });
   const leaf = new Image(); leaf.src = '../shared/assets/leaf.png?v=3';
   let skin = store.get('laurier_fly_skin', 'new1');
+  const ipChar = new Image();
+  if (IP) ipChar.src = window.LAURIER_IP_ART('corner.png');
 
   window.Laurier.bubbles($('.bubbles'));
 
@@ -341,6 +343,10 @@
       hills.filter((h) => h.far === far).forEach((h) => { ctx.beginPath(); ctx.arc(h.x, H - GROUND + (far ? 30 : 46), h.r, Math.PI, 0); ctx.fill(); });
     });
 
+    if (IP && ipChar.complete && ipChar.naturalWidth) {   // IP character cheering on the grass
+      const h = 92, w = h * ipChar.naturalWidth / ipChar.naturalHeight, bob = Math.abs(Math.sin(t0 * 2.4)) * 5;
+      ctx.drawImage(ipChar, W - w - 16, H - GROUND - h + 14 - bob, w, h);
+    }
     pipes.forEach(pipe);
     rings.forEach((r) => { gfx.ring(ctx, r.x, r.y, 20 + r.t * 70, 1 - r.t, '#ffffff', 5 * (1 - r.t) + 1); gfx.ring(ctx, r.x, r.y, 10 + r.t * 50, .8 - r.t, '#ffd84d', 3); });
 

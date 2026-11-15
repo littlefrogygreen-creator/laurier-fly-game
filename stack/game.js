@@ -19,6 +19,8 @@
 
   const imgs = {};
   ['new1', 'new2', 'leaf'].forEach((k) => { const im = new Image(); im.src = '../shared/assets/' + k + '.png?v=3'; imgs[k] = im; });
+  const ipChar = new Image();
+  if (IP) ipChar.src = window.LAURIER_IP_ART('mascot.png');
   const ratio = (k) => (imgs[k].naturalWidth ? imgs[k].naturalHeight / imgs[k].naturalWidth : 0.78);
 
   window.Laurier.bubbles($('.bubbles'));
@@ -296,6 +298,11 @@
       ctx.fillStyle = '#fff'; ctx.font = "800 18px 'Baloo 2', sans-serif"; ctx.textAlign = 'center';
       ctx.fillText('Laurier', W / 2 + 10, 32);
       if (imgs.leaf.complete && imgs.leaf.naturalWidth) ctx.drawImage(imgs.leaf, W / 2 - 50, 11, 26, 26);
+    }
+
+    if (IP && ipChar.complete && ipChar.naturalWidth && camTop + H > -10) {   // IP character next to the pedestal
+      const h = 104, w = h * ipChar.naturalWidth / ipChar.naturalHeight, bob = Math.abs(Math.sin(t * 2.2)) * 4;
+      ctx.drawImage(ipChar, Math.max(4, W / 2 - BASE.w / 2 - w - 6), 40 - h - bob, w, h);
     }
 
     // tower, with a warning wobble when it is close to tipping
