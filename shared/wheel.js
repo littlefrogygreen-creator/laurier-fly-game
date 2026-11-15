@@ -5,7 +5,10 @@
   const { Audio, LB, store, esc } = window.Laurier;
 
   const GAME_NAMES = { fly: '飛飛挑戰', match: '消消樂', stack: '層層疊' };
-  const COLORS = ['#2fb83a', '#00838f', '#ff7eb6', '#4a4fc4', '#ffc93c', '#19a7b4', '#8ad16b', '#b38cf0'];
+  const IP = !!window.LAURIER_IP;
+  const COLORS = IP ? ['#ff5c9a', '#b38cf0', '#e0457b', '#ff8fbe', '#9f7ae0', '#f0679e', '#d47fd0', '#ff7a8a']
+                    : ['#2fb83a', '#00838f', '#ff7eb6', '#4a4fc4', '#ffc93c', '#19a7b4', '#8ad16b', '#b38cf0'];
+  const RIM = IP ? '#e0457b' : '#00838f';
   const NO_PRIZE = /多謝|謝謝|再接再厲|下次/;
 
   let modal = null, canvas = null, ctx = null, prizes = [], angle = 0, spinning = false, img = null;
@@ -38,7 +41,7 @@
     const n = prizes.length, S = canvas.width, c = S / 2, R = c - 10 * (S / 320);
     ctx.clearRect(0, 0, S, S);
     // outer rim with bulbs
-    ctx.fillStyle = '#00838f'; ctx.beginPath(); ctx.arc(c, c, R + 8 * (S / 320), 0, 7); ctx.fill();
+    ctx.fillStyle = RIM; ctx.beginPath(); ctx.arc(c, c, R + 8 * (S / 320), 0, 7); ctx.fill();
     for (let i = 0; i < 16; i++) {
       const a = i / 16 * Math.PI * 2, on = (Math.floor(performance.now() / 250) + i) % 2;
       ctx.fillStyle = on ? '#fff6b8' : '#ffffff';
@@ -70,7 +73,7 @@
     ctx.restore();
     // hub
     ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(c, c, 34 * (S / 320), 0, 7); ctx.fill();
-    ctx.strokeStyle = '#00838f'; ctx.lineWidth = 4 * (S / 320); ctx.stroke();
+    ctx.strokeStyle = RIM; ctx.lineWidth = 4 * (S / 320); ctx.stroke();
     if (img.complete && img.naturalWidth) { const s = 44 * (S / 320); ctx.drawImage(img, c - s / 2, c - s / 2, s, s); }
   }
 
@@ -116,7 +119,7 @@
       spinning = true; go.disabled = true; go.classList.remove('pulse'); go.textContent = '抽緊…';
       Audio.unlock();
       let res;
-      try { res = await LB.spin(game, store.get('laurier_phone', '')); } catch (e) { res = null; }
+      try { res = await LB.spin(game); } catch (e) { res = null; }
       if (!res || !res.ok) {
         spinning = false; go.disabled = false; go.textContent = '轉！';
         const why = res && res.error === 'used' ? '你喺呢款遊戲已經抽過喇。' : res && res.error === 'not_top' ? '你暫時唔喺十大，衝返入十大先抽得。' : res && res.error === 'no_prizes' ? '獎品已經全部送完，多謝支持！' : '暫時連唔到抽獎，請稍後再試。';
@@ -126,14 +129,16 @@
       if (res.prizes && res.prizes.length) prizes = res.prizes;
       await spinTo(res.index);
       spinning = false;
-      const win = !NO_PRIZE.test(res.prize);
+      const win = res.win != null ? res.win : !NO_PRIZE.test(res.prize);
       Audio.sfx(win ? 'special' : 'end');
+      if (win) {
+        confetti();
+        setTimeout(() => claimView(game, res.prize), 1200);   // let the confetti play first
+        return;
+      }
       const out = body().querySelector('.wheel-result'); out.hidden = false;
-      out.innerHTML = win
-        ? '🎉 恭喜你抽中<br><b>' + esc(res.prize) + '</b><br><small>我哋會用你登記嘅手機號碼聯絡你領獎。</small>'
-        : '<b>' + esc(res.prize) + '</b><br><small>多謝參與！</small>';
+      out.innerHTML = '<b>' + esc(res.prize) + '</b><br><small>多謝參與！</small>';
       go.textContent = '完成'; go.disabled = false; go.onclick = () => { modal.hidden = true; };
-      if (win) confetti();
     };
   }
 
@@ -146,56 +151,86 @@
     }
   }
 
+  /** A winner leaves a phone number so the prize can be handed over. */
+  function claimView(game, prize) {
+    sub(GAME_NAMES[game] + ' · 恭喜你！');
+    show((IP ? '<img class="ip-art ip-win" src="' + window.LAURIER_IP_ART('win.png') + '" alt="" onerror="this.remove()">' : '') +
+         '<p class="wheel-msg wheel-result">🎉 恭喜你抽中<br><b>' + esc(prize) + '</b></p>' +
+         '<form class="wheel-check" novalidate>' +
+         '<label for="claimPhone">留低手機號碼領獎（唔會公開，只用嚟聯絡你）</label>' +
+         '<input id="claimPhone" type="tel" inputmode="numeric" maxlength="8" placeholder="8 位數字" autocomplete="tel-national">' +
+         '<label class="agree"><input type="checkbox" name="agree"> 我同意提供手機號碼，只用作聯絡得獎者及安排領獎。每個手機號碼只可以領獎一次。</label>' +
+         '<button class="btn teal small" type="submit">確認領獎</button><p class="form-msg"></p>' +
+         '<button class="link-btn" type="button" data-later>遲啲先填（可以喺遊戲大廳「上榜即可抽獎」再填）</button></form>');
+    const f = body().querySelector('form'), input = f.querySelector('#claimPhone'), agree = f.querySelector('[name=agree]'), m = f.querySelector('.form-msg');
+    f.querySelector('[data-later]').onclick = () => { modal.hidden = true; };
+    f.onsubmit = async (e) => {
+      e.preventDefault();
+      const phone = input.value.replace(/\D/g, '');
+      if (!/^[4-9]\d{7}$/.test(phone)) { m.textContent = '請輸入 8 位數香港手機號碼'; return; }
+      if (!agree.checked) { m.textContent = '請先剔選同意'; return; }
+      m.textContent = '提交中…'; f.querySelector('[type=submit]').disabled = true;
+      try {
+        const res = await LB.claim(game, phone);
+        if (!res || !res.ok) throw new Error((res && res.error) || 'fail');
+        show('<p class="wheel-msg wheel-result">✅ 已收到！<br><b>' + esc(prize) + '</b><br><small>我哋會用你留低嘅手機號碼聯絡你領獎。</small></p>' +
+             '<button class="btn small" type="button" data-x>完成</button>');
+        body().querySelector('[data-x]').onclick = () => { modal.hidden = true; };
+      } catch (err) {
+        if (err.message === 'already') {
+          show('<p class="wheel-msg">呢個手機號碼已經領過獎。<br><small>每個手機號碼只可以領獎一次，多謝支持！</small></p><button class="btn small" type="button" data-x>好</button>');
+          body().querySelector('[data-x]').onclick = () => { modal.hidden = true; };
+          return;
+        }
+        m.textContent = err.message === 'phone' ? '請輸入 8 位數香港手機號碼' : '提交失敗，請檢查網絡再試';
+        f.querySelector('[type=submit]').disabled = false;
+      }
+    };
+  }
+
   /** Open straight onto the wheel for one game (after submitting a top-10 score). */
   async function openFor(game, rank) {
     if (!modal) build();
     modal.hidden = false; spinning = false;
     sub(''); show('<p class="wheel-msg">載入中…</p>');
     try {
-      const res = await LB.spinStatus(store.get('laurier_phone', ''));
+      const res = await LB.spinStatus();
       if (!res || !res.ok) throw new Error('fail');
       prizes = res.prizes || [];
       const g = res.games && res.games[game];
+      if (g && g.toClaim && g.toClaim.length) return claimView(game, g.toClaim.join('、'));
       if (!prizes.length) return msg('獎品準備緊，遲啲再嚟抽！');
       if (!g || !g.canSpin) return msg(g && g.prizes.length ? '你喺' + GAME_NAMES[game] + '已經抽過：' + g.prizes.join('、') : '你暫時唔喺十大，衝入十大先抽得！');
       wheelView(game, g.rank || rank);
     } catch (e) { msg('暫時連唔到抽獎，請稍後再試。'); }
   }
 
-  /** Lobby entry: enter a phone number, see which games can still be spun. */
-  function openLobby() {
+  /** Lobby entry: this phone's chances in each game, plus prizes still waiting for a phone number. */
+  async function openLobby() {
     if (!modal) build();
     modal.hidden = false; spinning = false;
-    sub('入咗任何一款遊戲嘅十大，就可以喺嗰款遊戲抽獎一次。');
-    show('<form class="wheel-check" novalidate><label for="wheelPhone">你登記排行榜用嘅手機號碼</label>' +
-         '<input id="wheelPhone" type="tel" inputmode="numeric" maxlength="8" placeholder="8 位數字" autocomplete="tel-national">' +
-         '<button class="btn teal small" type="submit">查詢抽獎機會</button><p class="form-msg"></p></form>');
-    const f = body().querySelector('form'), input = f.querySelector('input'), m = f.querySelector('.form-msg');
-    input.value = store.get('laurier_phone', '');
-    f.onsubmit = async (e) => {
-      e.preventDefault();
-      const phone = input.value.replace(/\D/g, '');
-      if (!/^[4-9]\d{7}$/.test(phone)) { m.textContent = '請輸入 8 位數香港手機號碼'; return; }
-      m.textContent = '查詢中…';
-      try {
-        const res = await LB.spinStatus(phone);
-        if (!res || !res.ok) throw new Error('fail');
-        store.set('laurier_phone', phone);
-        prizes = res.prizes || [];
-        const rows = Object.keys(GAME_NAMES).map((g) => {
-          const s = res.games[g] || {};
-          const state = s.canSpin ? '<button class="btn small" type="button" data-spin="' + g + '" data-rank="' + s.rank + '">抽獎</button>'
-            : s.prizes && s.prizes.length ? '<span class="won">已抽：' + esc(s.prizes.join('、')) + '</span>'
-            : '<span class="nope">' + (s.rank ? '排第 ' + s.rank + ' 名，未入十大' : '未上榜') + '</span>';
-          return '<li><b>' + GAME_NAMES[g] + '</b>' + state + '</li>';
-        }).join('');
-        show('<ul class="spin-list">' + rows + '</ul><p class="lb-note">每款遊戲入十大可以抽一次。</p>');
-        body().querySelectorAll('[data-spin]').forEach((b) => b.addEventListener('click', () => {
-          if (!prizes.length) return msg('獎品準備緊，遲啲再嚟抽！');
-          wheelView(b.dataset.spin, Number(b.dataset.rank));
-        }));
-      } catch (err) { m.textContent = '暫時連唔到抽獎，請稍後再試'; }
-    };
+    sub('今日入咗任何一款遊戲嘅十大，就可以喺嗰款遊戲抽獎一次。');
+    show('<p class="wheel-msg">查詢緊…</p>');
+    try {
+      const res = await LB.spinStatus();
+      if (!res || !res.ok) throw new Error('fail');
+      prizes = res.prizes || [];
+      const rows = Object.keys(GAME_NAMES).map((g) => {
+        const s = res.games[g] || {};
+        const state = s.toClaim && s.toClaim.length
+          ? '<button class="btn small teal" type="button" data-claim="' + g + '" data-prize="' + esc(s.toClaim.join('、')) + '">填電話領獎</button>'
+          : s.canSpin ? '<button class="btn small" type="button" data-spin="' + g + '" data-rank="' + s.rank + '">抽獎</button>'
+          : s.prizes && s.prizes.length ? '<span class="won">已抽：' + esc(s.prizes.join('、')) + '</span>'
+          : '<span class="nope">' + (s.rank ? '排第 ' + s.rank + ' 名，未入十大' : '未上榜') + '</span>';
+        return '<li><b>' + GAME_NAMES[g] + '</b>' + state + '</li>';
+      }).join('');
+      show('<ul class="spin-list">' + rows + '</ul><p class="lb-note">排行榜每日 00:00 重新計，每日入十大可以喺每款遊戲抽一次。每個手機號碼只可以領獎一次。抽獎紀錄跟住呢部手機，請用返玩遊戲嗰部手機。</p>');
+      body().querySelectorAll('[data-spin]').forEach((b) => b.addEventListener('click', () => {
+        if (!prizes.length) return msg('獎品準備緊，遲啲再嚟抽！');
+        wheelView(b.dataset.spin, Number(b.dataset.rank));
+      }));
+      body().querySelectorAll('[data-claim]').forEach((b) => b.addEventListener('click', () => claimView(b.dataset.claim, b.dataset.prize)));
+    } catch (err) { msg('暫時連唔到抽獎，請稍後再試。'); }
   }
 
   window.Laurier.Wheel = { openFor, openLobby, available: () => LB.online };

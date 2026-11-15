@@ -2,6 +2,7 @@
   'use strict';
   const { Audio, store, $, loadBoard, bindSubmit, bindMute, LB, renderBoard, gfx } = window.Laurier;
   const GAME = 'fly';
+  const IP = !!window.LAURIER_IP;   // IP 期間限定版: pink sky, hearts and bows
 
   /* ---------- setup ---------- */
   const canvas = $('#game'), ctx = canvas.getContext('2d');
@@ -35,7 +36,9 @@
   function gap() { return Math.max(235 - score * 2, 140); }
 
   // sky palettes: day → sunset → dusk → night (the night look matches the 40cm night pack)
-  const SKY = [[[150, 222, 255], [226, 250, 255]], [[255, 170, 205], [255, 232, 196]], [[92, 82, 190], [226, 170, 214]], [[20, 24, 84], [70, 74, 170]]];
+  const SKY = IP
+    ? [[[255, 200, 224], [255, 241, 247]], [[255, 168, 204], [255, 226, 210]], [[214, 120, 190], [255, 186, 220]], [[86, 44, 120], [176, 96, 170]]]
+    : [[[150, 222, 255], [226, 250, 255]], [[255, 170, 205], [255, 232, 196]], [[92, 82, 190], [226, 170, 214]], [[20, 24, 84], [70, 74, 170]]];
 
   function makeScenery() {
     clouds = []; hills = []; stars = [];
@@ -207,11 +210,23 @@
   /* ---------- draw ---------- */
   function rr(x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
 
-  const PIPE_COLORS = [
+  const PIPE_COLORS = IP ? [
+    ['#ffa8cb', '#f0679e', '#fff0f6', '#c94a7d'],
+    ['#ffc7dc', '#f58bb4', '#ffffff', '#d4628f'],
+    ['#d9b8f5', '#a77ad6', '#f7efff', '#7e55ad'],
+  ] : [
     ['#6fe0b0', '#22a87a', '#eafff5', '#0f7f5b'],
     ['#63d0df', '#008d9b', '#e6fcff', '#00646e'],
     ['#9aa0f5', '#4a4fc4', '#eef0ff', '#30348f'],
   ];
+  // a little heart, drawn instead of the leaf in the IP version
+  function heart(x, y, s, col) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s / 32, s / 32);
+    ctx.fillStyle = col; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(16, 29); ctx.bezierCurveTo(1, 19.5, 1, 12, 1, 9.5); ctx.bezierCurveTo(1, 4.8, 4.6, 1, 9, 1);
+    ctx.bezierCurveTo(12, 1, 14.6, 2.7, 16, 5.2); ctx.bezierCurveTo(17.4, 2.7, 20, 1, 23, 1); ctx.bezierCurveTo(27.4, 1, 31, 4.8, 31, 9.5);
+    ctx.bezierCurveTo(31, 12, 31, 19.5, 16, 29); ctx.closePath(); ctx.stroke(); ctx.fill(); ctx.restore();
+  }
   function pipe(p) {
     const [c1, c2, hl, dk] = PIPE_COLORS[p.hue];
     const body = (y, h) => {
@@ -235,7 +250,10 @@
     };
     body(-20, p.top + 6); cap(p.top - 28);
     body(p.bot + 14, H - GROUND - p.bot - 14); cap(p.bot);
-    if (leaf.complete && leaf.naturalWidth) {
+    if (IP) {
+      heart(p.x + p.w / 2 - 12, p.top - 25, 24, '#ff5c9a');
+      heart(p.x + p.w / 2 - 12, p.bot + 3, 24, '#ff5c9a');
+    } else if (leaf.complete && leaf.naturalWidth) {
       ctx.drawImage(leaf, p.x + p.w / 2 - 12, p.top - 26, 24, 24);
       ctx.drawImage(leaf, p.x + p.w / 2 - 12, p.bot + 2, 24, 24);
     }
@@ -308,13 +326,14 @@
     ctx.fillStyle = night > .5 ? '#f4f5ff' : '#fff6b8'; ctx.beginPath(); ctx.arc(sunX, sunY, 30, 0, 7); ctx.fill();
     if (night > .5) { ctx.fillStyle = 'rgb(' + c1 + ')'; ctx.globalAlpha = night; ctx.beginPath(); ctx.arc(sunX + 12, sunY - 8, 25, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
 
-    gfx.ribbons(ctx, W, H - GROUND, t0, .34 - night * .16, ['255,255,255', '160,240,215', '255,255,255']);
+    gfx.ribbons(ctx, W, H - GROUND, t0, .34 - night * .16, IP ? ['255,255,255', '255,170,205', '255,255,255'] : ['255,255,255', '160,240,215', '255,255,255']);
 
     clouds.forEach((c) => gfx.cloud(ctx, c.x, c.y, c.s, (.55 + c.s * .35) * (1 - night * .55)));
 
     // hills, far layer then near layer
     const hillCol = (far) => {
-      const d = far ? [150, 226, 170] : [120, 214, 132], n = far ? [70, 96, 170] : [52, 78, 150];
+      const d = IP ? (far ? [255, 196, 222] : [247, 160, 200]) : (far ? [150, 226, 170] : [120, 214, 132]);
+      const n = far ? [70, 96, 170] : [52, 78, 150];
       return 'rgb(' + d.map((v, i) => Math.round(v + (n[i] - v) * night)) + ')';
     };
     [true, false].forEach((far) => {
@@ -328,12 +347,13 @@
     // ground
     const gy = H - GROUND;
     const gg = ctx.createLinearGradient(0, gy, 0, gy + 30);
-    gg.addColorStop(0, night > .5 ? '#3f8f6f' : '#8be07b'); gg.addColorStop(1, night > .5 ? '#2f7358' : '#5fc356');
+    gg.addColorStop(0, night > .5 ? (IP ? '#9a4f86' : '#3f8f6f') : (IP ? '#ff9cc4' : '#8be07b'));
+    gg.addColorStop(1, night > .5 ? (IP ? '#7c3d6c' : '#2f7358') : (IP ? '#f2779f' : '#5fc356'));
     ctx.fillStyle = gg; ctx.fillRect(-20, gy, W + 40, 30);
     ctx.fillStyle = 'rgba(0,80,40,.18)';
     for (let x = groundX; x < W + 48; x += 48) { ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + 24, gy); ctx.lineTo(x + 12, gy + 14); ctx.fill(); }
     ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(-20, gy, W + 40, 5);
-    ctx.fillStyle = night > .5 ? '#a9977a' : '#eedcae'; ctx.fillRect(-20, gy + 28, W + 40, GROUND);
+    ctx.fillStyle = night > .5 ? '#a9977a' : (IP ? '#ffe7d6' : '#eedcae'); ctx.fillRect(-20, gy + 28, W + 40, GROUND);
     ctx.fillStyle = 'rgba(0,0,0,.06)';
     for (let x = groundX * 1.3; x < W; x += 30) ctx.fillRect(x, gy + 40, 14, 4);
 
@@ -341,7 +361,7 @@
 
     feathers.forEach((f) => gfx.feather(ctx, f.x, f.y, f.rot, f.s, Math.min(1, f.life * 1.5)));
     parts.forEach((q) => {
-      if (q.star) gfx.sparkle(ctx, q.x, q.y, q.r * 1.8, q.life * 1.6, '#ffe36e');
+      if (q.star) gfx.sparkle(ctx, q.x, q.y, q.r * 1.8, q.life * 1.6, IP ? '#ff8fbe' : '#ffe36e');
       else { ctx.globalAlpha = Math.max(0, q.life * 1.6); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 7); ctx.fill(); }
     });
     ctx.globalAlpha = 1;

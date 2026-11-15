@@ -97,22 +97,35 @@
     };
   })();
 
+  /* Anonymous player ID: a random code kept on this phone, so the leaderboard can count one best
+     score per player without asking for a phone number. */
+  function playerId() {
+    let id = store.get('laurier_pid', '');
+    if (!/^[A-Za-z0-9_-]{12,40}$/.test(id)) {
+      const a = new Uint8Array(16);
+      (window.crypto || window.msCrypto).getRandomValues(a);
+      id = 'p' + Array.from(a, (b) => b.toString(16).padStart(2, '0')).join('');
+      store.set('laurier_pid', id);
+    }
+    return id;
+  }
+
   /* ---------------- Leaderboard ----------------
      Online board: a Google Apps Script web app (see apps-script.gs in the repo).
-     Phone numbers are stored only in the owner's Google Sheet; the board returns names + scores. */
+     Players are known by nickname + anonymous ID; a phone number is only asked for to claim a prize. */
   const LB = (function () {
     const url = (window.LAURIER_CONFIG && window.LAURIER_CONFIG.scriptUrl) || '';
     const online = /^https:\/\/script\.google(usercontent)?\.com\//.test(url);
     const localKey = (g) => 'laurier_local_board_' + g;
 
     function localBoard(game) { return store.get(localKey(game), []); }
-    function localSubmit(game, name, phone, score) {
-      const list = localBoard(game).filter((r) => r.phone !== phone);
-      const prev = localBoard(game).find((r) => r.phone === phone);
-      list.push(prev && prev.score >= score ? prev : { name, phone, score, t: Date.now() });
+    function localSubmit(game, name, pid, score) {
+      const list = localBoard(game).filter((r) => r.pid !== pid);
+      const prev = localBoard(game).find((r) => r.pid === pid);
+      list.push(prev && prev.score >= score ? prev : { name, pid, score, t: Date.now() });
       list.sort((a, b) => b.score - a.score || a.t - b.t);
       store.set(localKey(game), list.slice(0, 50));
-      const rank = list.findIndex((r) => r.phone === phone) + 1;
+      const rank = list.findIndex((r) => r.pid === pid) + 1;
       return { ok: true, top: list.slice(0, 10).map((r) => ({ name: r.name, score: r.score })), rank, best: list[rank - 1].score };
     }
 
@@ -144,20 +157,26 @@
         const j = await r.json();
         return j && j.ok && Array.isArray(j.prizes) ? j.prizes : null;
       },
-      async spinStatus(phone) {
+      async spinStatus() {
         if (!online) return { ok: false, error: 'offline' };
-        const r = await withTimeout(fetch(url, { method: 'POST', body: JSON.stringify({ action: 'spinStatus', phone }) }), 15000);
+        const r = await withTimeout(fetch(url, { method: 'POST', body: JSON.stringify({ action: 'spinStatus', pid: playerId() }) }), 15000);
         return r.json();
       },
-      async spin(game, phone) {
+      async spin(game) {
         if (!online) return { ok: false, error: 'offline' };
-        const r = await withTimeout(fetch(url, { method: 'POST', body: JSON.stringify({ action: 'spin', game, phone }) }), 20000);
+        const r = await withTimeout(fetch(url, { method: 'POST', body: JSON.stringify({ action: 'spin', game, pid: playerId() }) }), 20000);
         return r.json();
       },
-      async submit(game, name, phone, score) {
-        if (!online) return localSubmit(game, name, phone, score);
+      async claim(game, phone) {
+        if (!online) return { ok: false, error: 'offline' };
+        const r = await withTimeout(fetch(url, { method: 'POST', body: JSON.stringify({ action: 'claim', game, phone, pid: playerId() }) }), 15000);
+        return r.json();
+      },
+      async submit(game, name, score) {
+        const pid = playerId();
+        if (!online) return localSubmit(game, name, pid, score);
         // text/plain body avoids a CORS preflight, which Apps Script cannot answer
-        const r = await withTimeout(fetch(url, { method: 'POST', body: JSON.stringify({ game, name, phone, score }) }), 15000);
+        const r = await withTimeout(fetch(url, { method: 'POST', body: JSON.stringify({ game, name, pid, score }) }), 15000);
         return r.json();
       },
     };
@@ -191,23 +210,18 @@
 
   /* Score submission form inside the game-over card. */
   function bindSubmit(form, game, getScore, onDone) {
-    const nameIn = $('[name=nick]', form), phoneIn = $('[name=phone]', form), agree = $('[name=agree]', form);
+    const nameIn = $('[name=nick]', form);
     const msg = $('.form-msg', form), btn = $('button[type=submit]', form);
     nameIn.value = store.get('laurier_nick', '');
-    phoneIn.value = store.get('laurier_phone', '');
-    agree.checked = store.get('laurier_agree', false);
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = nameIn.value.trim().replace(/\s+/g, ' ');
-      const phone = phoneIn.value.replace(/\D/g, '');
       if (!name || name.length > 12) { msg.textContent = '請輸入 1–12 個字嘅暱稱'; return; }
-      if (!/^[4-9]\d{7}$/.test(phone)) { msg.textContent = '請輸入 8 位數香港手機號碼'; return; }
-      if (!agree.checked) { msg.textContent = '請先同意收集資料聲明'; return; }
-      store.set('laurier_nick', name); store.set('laurier_phone', phone); store.set('laurier_agree', true);
+      store.set('laurier_nick', name);
       btn.disabled = true; msg.textContent = '提交中…';
       try {
         const score = getScore();
-        const res = await LB.submit(game, name, phone, score);
+        const res = await LB.submit(game, name, score);
         if (!res || !res.ok) throw new Error((res && res.error) || 'fail');
         msg.textContent = res.rank && res.rank <= 10 ? '恭喜！你而家排第 ' + res.rank + ' 名 🎉' :
           (res.rank ? '已記錄！你排第 ' + res.rank + ' 名，再努力衝入十大！' : '已記錄！');
@@ -321,5 +335,5 @@
     btn.addEventListener('click', (e) => { e.stopPropagation(); Audio.unlock(); Audio.toggle(); Audio.start(); paint(); });
   }
 
-  window.Laurier = { Audio, LB, store, $, esc, renderBoard, loadBoard, bindSubmit, bindMute, GAMES, gfx, bubbles, autoMusic };
+  window.Laurier = { Audio, LB, store, $, esc, playerId, renderBoard, loadBoard, bindSubmit, bindMute, GAMES, gfx, bubbles, autoMusic };
 })();
