@@ -13,7 +13,7 @@
     const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
     canvas.width = Math.round(window.innerWidth * dpr); canvas.height = Math.round(window.innerHeight * dpr);
     scale = canvas.height / H;
-    W = Math.max(320, Math.min(canvas.width / scale, 1100));
+    W = Math.max(320, Math.min(canvas.width / scale, 2400));
   }
   window.addEventListener('resize', resize); resize();
 
@@ -35,7 +35,7 @@
   let score = 0, placed = 0, perfects = 0, streak = 0, bestStreak = 0, camTop = 0, t = 0, dir = 1, shake = 0, flash = 0, scorePop = 0;
   let best = store.get('laurier_stack_best', 0);
 
-  for (let i = 0; i < 40; i++) clouds.push({ x: Math.random() * 1200, y: -Math.random() * 6000 - 60, s: .5 + Math.random() * .9 });
+  for (let i = 0; i < 40; i++) clouds.push({ x: Math.random() * 2400, y: -Math.random() * 6000 - 60, s: .5 + Math.random() * .9 });
   for (let i = 0; i < 160; i++) stars.push({ x: Math.random() * 1200, y: -2600 - Math.random() * 9000, r: Math.random() * 1.6 + .4 });
 
   const topY = () => (tower.length ? tower[tower.length - 1].y : 0);

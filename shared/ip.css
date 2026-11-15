@@ -132,7 +132,6 @@ html.ip .t1 .face { background: linear-gradient(160deg, #fff4fa, #f6c5e0); }
 html.ip .t2 .face { background: linear-gradient(160deg, #ffffff, #ffe6cf); }
 html.ip .t3 .face { background: linear-gradient(160deg, #ffffff, #e9e2ff); }
 html.ip .t4 .face { background: linear-gradient(160deg, #ffffff, #dff5ea); }
-html.ip .t5 .face { background: linear-gradient(160deg, #fff7d6, #ffe08a); }
 html.ip .tile.new-pack .face::after, html.ip .tile-demo.t-new::after, html.ip .new-tag { background: linear-gradient(180deg, #ff8fbe, #e0457b); }
 html.ip .tile-demo { background: linear-gradient(160deg, #ffffff, #ffd9e8); }
 html.ip .tagline b { color: #ff5c9a; }
@@ -148,7 +147,9 @@ html.ip .ip-win { display: block !important; width: 120px; margin: 0 auto -6px; 
 .screen .ip-mascot, html.ip .screen .ip-mascot { width: min(120px, 30vw) !important; margin: 0 auto 2px !important; }
 
 /* IP character peeking over the match-3 board */
-html.ip .ip-peek { display: block !important; position: absolute; z-index: 6; right: -8px; top: -46px; width: 92px; pointer-events: none; filter: drop-shadow(0 4px 4px rgba(184,50,95,.25)); }
+html.ip .ip-peek { display: block !important; position: absolute; z-index: 6; right: -10px; top: -60px; width: 74px; pointer-events: none; filter: drop-shadow(0 4px 4px rgba(184,50,95,.25)); }
 html.ip .hud { position: relative; z-index: 7; }
 /* IP character on the game-over card */
 html.ip #over .card::after { content: ''; position: absolute; left: -18px; bottom: -14px; width: 84px; height: 72px; background: url('ip/win.png') center / contain no-repeat; pointer-events: none; }
+html.ip .t5 .face { background: linear-gradient(160deg, #f2fbff, #b9e3fb); }
+html.ip .t5 .face img { width: 96%; height: 96%; }

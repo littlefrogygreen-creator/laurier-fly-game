@@ -14,7 +14,7 @@
     const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
     canvas.width = Math.round(window.innerWidth * dpr); canvas.height = Math.round(window.innerHeight * dpr);
     scale = canvas.height / H;
-    W = Math.max(320, Math.min(canvas.width / scale, 1100));
+    W = Math.max(320, Math.min(canvas.width / scale, 2400));
   }
   window.addEventListener('resize', resize); resize();
 
@@ -42,12 +42,14 @@
     ? [[[255, 200, 224], [255, 241, 247]], [[255, 168, 204], [255, 226, 210]], [[214, 120, 190], [255, 186, 220]], [[86, 44, 120], [176, 96, 170]]]
     : [[[150, 222, 255], [226, 250, 255]], [[255, 170, 205], [255, 232, 196]], [[92, 82, 190], [226, 170, 214]], [[20, 24, 84], [70, 74, 170]]];
 
+  // enough hills to cover the widest screen (W can be up to 2400)
+  const FAR_HILLS = 11, NEAR_HILLS = 13;
   function makeScenery() {
     clouds = []; hills = []; stars = [];
-    for (let i = 0; i < 9; i++) clouds.push({ x: Math.random() * 1200, y: 30 + Math.random() * 280, s: .45 + Math.random() * .9, v: .08 + Math.random() * .16 });
-    for (let i = 0; i < 6; i++) hills.push({ x: i * 260 + Math.random() * 80, r: 130 + Math.random() * 90, far: true });
-    for (let i = 0; i < 7; i++) hills.push({ x: i * 210 + Math.random() * 60, r: 80 + Math.random() * 60, far: false });
-    for (let i = 0; i < 70; i++) stars.push({ x: Math.random() * 1200, y: Math.random() * 420, r: Math.random() * 1.5 + .4, p: Math.random() * 6 });
+    for (let i = 0; i < 14; i++) clouds.push({ x: Math.random() * 2400, y: 30 + Math.random() * 280, s: .45 + Math.random() * .9, v: .08 + Math.random() * .16 });
+    for (let i = 0; i < FAR_HILLS; i++) hills.push({ x: i * 260 + Math.random() * 80, r: 130 + Math.random() * 90, far: true });
+    for (let i = 0; i < NEAR_HILLS; i++) hills.push({ x: i * 210 + Math.random() * 60, r: 80 + Math.random() * 60, far: false });
+    for (let i = 0; i < 120; i++) stars.push({ x: Math.random() * 2400, y: Math.random() * 420, r: Math.random() * 1.5 + .4, p: Math.random() * 6 });
   }
   makeScenery();
 
@@ -139,7 +141,7 @@
     const sp = state === 'play' ? speed() : (state === 'menu' || state === 'ready' ? 140 : 0);
     groundX = (groundX - sp * dt) % 48;
     clouds.forEach((c) => { c.x -= sp * c.v * dt + 6 * dt; if (c.x < -200) { c.x = W + 100 + Math.random() * 200; c.y = 30 + Math.random() * 280; } });
-    hills.forEach((h) => { h.x -= sp * (h.far ? .14 : .3) * dt; if (h.x < -h.r * 1.5) h.x += (h.far ? 6 * 260 : 7 * 210); });
+    hills.forEach((h) => { h.x -= sp * (h.far ? .14 : .3) * dt; if (h.x < -h.r * 1.5) h.x += (h.far ? FAR_HILLS * 260 : NEAR_HILLS * 210); });
 
     // the sky slowly turns from day to night as the score climbs
     const target = state === 'menu' ? 0 : Math.min(score / 12, 3);
