@@ -7,8 +7,9 @@
  *
  * 玩法：
  *   - 每款遊戲每得 1 分，玩家嘅「累計分數」就加 1 分（三款遊戲加埋計）。
- *   - 排行榜：每款遊戲計每位玩家嘅最高分，永久保留（每個月換一款遊戲）。
- *   - 累計分數夠，就可以兌換「Rewards」分頁入面嘅獎品；每款獎品每人（每部手機、每個電話號碼）限換一次。
+ *   - 排行榜：每個月（香港時間每月 1 號 00:00）重新計，計每位玩家喺當月嘅最高分。每個月換一款遊戲。
+ *   - 累計分數唔會每月清零，全年累計；夠分就可以兌換「Rewards」分頁入面嘅獎品，
+ *     每款獎品每人（每部手機、每個電話號碼）限換一次，換獎唔會扣分。
  *   - 上榜只需要暱稱；兌換獎品先需要手機號碼。
  *
  * 分頁：
@@ -22,18 +23,20 @@ var GAMES = { fly: { col: 4, max: 600 }, match: { col: 5, max: 200 }, stack: { c
 var TOP_N = 10;
 var RATE = 2.5;   // 每秒最多可以賺幾多分；提交得太快太多當作作弊
 var SLACK = 30;
+var TZ = 'Asia/Hong_Kong';
+var MONTHLY = true;   // true = 排行榜每月重新計；false = 永久
 
 function doGet(e) {
   var p = (e && e.parameter) || {};
   if (p.rewards) return json_({ ok: true, rewards: rewards_().map(publicReward_) });
   var game = p.game || 'fly';
   if (game === 'all') {
-    var rows = players_(), boards = {};
-    Object.keys(GAMES).forEach(function (g) { boards[g] = board_(rows, g); });
-    return json_({ ok: true, boards: boards, v: 3 });
+    var boards = {};
+    Object.keys(GAMES).forEach(function (g) { boards[g] = board_(g); });
+    return json_({ ok: true, boards: boards, month: month_(new Date()), v: 4 });
   }
   if (!GAMES[game]) return json_({ ok: false, error: 'bad game' });
-  return json_({ ok: true, top: board_(players_(), game), v: 3 });
+  return json_({ ok: true, top: board_(game), month: month_(new Date()), v: 4 });
 }
 
 function doPost(e) {
@@ -82,9 +85,9 @@ function submit_(d) {
   } finally {
     lock.releaseLock();
   }
-  var all = players_(), rank = 0, sorted = sorted_(all, game);
-  for (var j = 0; j < sorted.length; j++) if (sorted[j].pid === pid) { rank = j + 1; break; }
-  return json_({ ok: true, rank: rank, best: best, total: earned, top: board_(all, game) });
+  var sorted = ranking_(game), rank = 0, monthBest = score;
+  for (var j = 0; j < sorted.length; j++) if (sorted[j].pid === pid) { rank = j + 1; monthBest = sorted[j].score; break; }
+  return json_({ ok: true, rank: rank, best: monthBest, total: earned, top: sorted.slice(0, TOP_N).map(publicRow_) });
 }
 
 function players_() {
@@ -97,13 +100,26 @@ function players_() {
   return out;
 }
 
-function sorted_(rows, game) {
-  return rows.filter(function (p) { return p[game] > 0; }).sort(function (a, b) { return b[game] - a[game] || a.row - b.row; });
+/** This month's best score per player for one game (all time when MONTHLY is false), highest first. */
+function ranking_(game) {
+  var v = scoreSheet_().getDataRange().getValues(), bestBy = {}, now = month_(new Date());
+  for (var i = 1; i < v.length; i++) {
+    if (v[i][1] !== game) continue;
+    if (MONTHLY && !(v[i][0] instanceof Date && month_(v[i][0]) === now)) continue;
+    var pid = String(v[i][3]), score = Number(v[i][4]) || 0, t = v[i][0] instanceof Date ? v[i][0].getTime() : 0;
+    var cur = bestBy[pid];
+    if (score > 0 && (!cur || score > cur.score)) bestBy[pid] = { pid: pid, name: String(v[i][2]).replace(/^'/, ''), score: score, t: t };
+  }
+  var list = Object.keys(bestBy).map(function (k) { return bestBy[k]; });
+  list.sort(function (a, b) { return b.score - a.score || a.t - b.t; });
+  return list;
 }
 
-function board_(rows, game) {
-  return sorted_(rows, game).slice(0, TOP_N).map(function (p) { return { name: p.name, score: p[game] }; });
-}
+function board_(game) { return ranking_(game).slice(0, TOP_N).map(publicRow_); }
+function publicRow_(r) { return { name: r.name, score: r.score }; }
+
+/** Calendar month in Hong Kong, e.g. 2026-12. */
+function month_(d) { return Utilities.formatDate(d, TZ, 'yyyy-MM'); }
 
 /* ---------------- rewards ---------------- */
 
