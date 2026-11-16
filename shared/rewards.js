@@ -38,7 +38,7 @@
         return '<li class="' + (total >= r.need && !r.redeemed ? 'ready' : '') + '"><span class="t-tier">' + esc(r.tier) + '</span>' +
           '<span class="t-info"><b>' + esc(r.name) + '</b><small>需要 ' + fmt(r.need) + ' 分</small></span>' + state + '</li>';
       }).join('') + '</ul>' +
-      '<p class="lb-note">玩遊戲每得 1 分，累計積分就加 1 分。積分全年累計，換獎唔會扣分；每款獎品每人限換一次，換獎時先需要留手機號碼。</p>';
+      '<p class="lb-note">玩遊戲每得 1 分，累計積分就加 1 分。積分全年累計，換獎唔會扣分；換獎時先需要留手機號碼。</p>';
   }
 
   function bindTiers(root) {
@@ -78,7 +78,7 @@
       '<form class="submit-form" novalidate><div class="fields">' +
       '<label for="redeemPhone">手機號碼（唔會公開，只用嚟聯絡你領獎）</label>' +
       '<input id="redeemPhone" type="tel" inputmode="numeric" maxlength="8" placeholder="8 位數字" autocomplete="tel-national">' +
-      '<label class="agree"><input type="checkbox" name="agree"> 我同意提供手機號碼，只用作聯絡及安排領獎。每款獎品每個手機號碼限換一次。</label>' +
+      '<label class="agree"><input type="checkbox" name="agree"> 我同意提供手機號碼，只用作聯絡及安排領獎。</label>' +
       '<button class="btn teal small" type="submit">確認兌換</button></div><p class="form-msg"></p>' +
       '<button class="link-btn" type="button" data-back>返回獎品清單</button></form>';
     const f = body.querySelector('form'), input = f.querySelector('input[type=tel]'), agree = f.querySelector('[name=agree]'), m = f.querySelector('.form-msg');
