@@ -33,10 +33,10 @@ function doGet(e) {
   if (game === 'all') {
     var boards = {};
     Object.keys(GAMES).forEach(function (g) { boards[g] = board_(g); });
-    return json_({ ok: true, boards: boards, month: month_(new Date()), v: 4 });
+    return json_({ ok: true, boards: boards, month: month_(new Date()), v: 5 });
   }
   if (!GAMES[game]) return json_({ ok: false, error: 'bad game' });
-  return json_({ ok: true, top: board_(game), month: month_(new Date()), v: 4 });
+  return json_({ ok: true, top: board_(game), month: month_(new Date()), v: 5 });
 }
 
 function doPost(e) {
