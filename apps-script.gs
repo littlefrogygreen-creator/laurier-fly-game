@@ -1,257 +1,175 @@
 /**
- * Laurier LSSG 小遊戲：排行榜同幸運輪盤（三款遊戲共用）
+ * Laurier LSSG 小遊戲：排行榜同累計積分換獎品
  *
  * 安裝：喺排行榜 Google Sheet → 擴充功能 → Apps Script，
  * 將呢個檔案全部內容貼入去，取代原有內容，儲存。
+ * 更新程式：部署 → 管理部署作業 → 鉛筆圖示 → 版本揀「新版本」→ 部署（網址唔會變）。
  *
- * 第一次部署：部署 → 新增部署作業 → 網頁應用程式（執行身分：我；誰可以存取：所有人）。
- * 之後更新程式：部署 → 管理部署作業 → 鉛筆圖示 → 版本揀「新版本」→ 部署。
- * （咁樣網址唔會變；如果揀「新增部署作業」，會出一條新網址。）
- *
- * 玩家上榜只需要暱稱。每部手機有一個自動產生嘅「玩家編號」，用嚟計最高分同抽獎次數。
- * 只有抽中獎品先需要填手機號碼領獎。
- *
- * 排行榜每日（香港時間 00:00）重新計：只計當日嘅分數，每日入十大都可以喺每款遊戲抽一次。
- * 每個手機號碼只可以領一次獎；已經領過獎嘅號碼再抽中，會標示「重複，無效」，獎品數量會加返。
+ * 玩法：
+ *   - 每款遊戲每得 1 分，玩家嘅「累計分數」就加 1 分（三款遊戲加埋計）。
+ *   - 排行榜：每款遊戲計每位玩家嘅最高分，永久保留（每個月換一款遊戲）。
+ *   - 累計分數夠，就可以兌換「Rewards」分頁入面嘅獎品；每款獎品每人（每部手機、每個電話號碼）限換一次。
+ *   - 上榜只需要暱稱；兌換獎品先需要手機號碼。
  *
  * 分頁：
- *   Scores  每次提交分數加一行（時間、遊戲、暱稱、玩家編號、分數）
- *   Prizes  輪盤獎品，由你自己填（獎品名稱、機會、剩餘數量、顏色）
- *   Draws   每次抽獎加一行（時間、遊戲、暱稱、玩家編號、名次、獎品、領獎手機）
- * 公開返回嘅資料只有暱稱、分數同獎品名稱；手機號碼只留喺呢份 Sheet。
+ *   Players  每位玩家一行（玩家編號、暱稱、累計分數、三款遊戲最高分）
+ *   Scores   每次提交分數嘅紀錄（時間、遊戲、暱稱、玩家編號、分數）
+ *   Rewards  獎品，由你自己改（級別、獎品、所需累計分數、剩餘數量）
+ *   Redeem   兌換紀錄（時間、級別、獎品、暱稱、玩家編號、累計分數、手機、狀態）
  */
 
-var SHEET_NAME = 'Scores';
-var PRIZE_SHEET = 'Prizes';
-var DRAW_SHEET = 'Draws';
-var MAX_SCORE = { fly: 2000, match: 200000, stack: 3000 }; // 超過呢個分數當作作弊，唔接受
-var GAMES = { fly: true, match: true, stack: true };
-var TOP_N = 10;          // 入咗十大先可以抽
-var SPINS_PER_GAME = 1;  // 每個玩家喺每款遊戲最多抽幾多次
-var NO_PRIZE = /多謝|謝謝|再接再厲|下次/;  // 名入面有呢啲字 = 冇獎，唔使留電話
-var TZ = 'Asia/Hong_Kong';
-var DAILY = true;        // true = 排行榜每日重新計；false = 一直累積
-var VOID_MARK = '重複，無效';  // 已領過獎嘅號碼再領，「領獎手機」欄會寫呢句
+var GAMES = { fly: { col: 4, max: 600 }, match: { col: 5, max: 200 }, stack: { col: 6, max: 600 } };  // max = 一局最高可能分數
+var TOP_N = 10;
+var RATE = 2.5;   // 每秒最多可以賺幾多分；提交得太快太多當作作弊
+var SLACK = 30;
 
 function doGet(e) {
   var p = (e && e.parameter) || {};
-  if (p.prizes) return json_({ ok: true, prizes: wheel_() });
+  if (p.rewards) return json_({ ok: true, rewards: rewards_().map(publicReward_) });
   var game = p.game || 'fly';
   if (game === 'all') {
-    var boards = {};
-    Object.keys(GAMES).forEach(function (g) { boards[g] = ranking_(g).slice(0, TOP_N).map(publicRow_); });
-    return json_({ ok: true, boards: boards });
+    var rows = players_(), boards = {};
+    Object.keys(GAMES).forEach(function (g) { boards[g] = board_(rows, g); });
+    return json_({ ok: true, boards: boards, v: 3 });
   }
   if (!GAMES[game]) return json_({ ok: false, error: 'bad game' });
-  return json_({ ok: true, top: ranking_(game).slice(0, TOP_N).map(publicRow_) });
+  return json_({ ok: true, top: board_(players_(), game), v: 3 });
 }
 
 function doPost(e) {
   var d;
   try { d = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'bad json' }); }
-  if (d.action === 'spinStatus') return spinStatus_(d);
-  if (d.action === 'spin') return spin_(d);
-  if (d.action === 'claim') return claim_(d);
+  if (d.action === 'me') return me_(d);
+  if (d.action === 'redeem') return redeem_(d);
+  if (d.action) return json_({ ok: false, error: 'bad action' });
   return submit_(d);
 }
 
-/* ---------------- scores ---------------- */
+/* ---------------- scores and points ---------------- */
 
 function submit_(d) {
   var game = String(d.game || '');
   var name = String(d.name || '').replace(/\s+/g, ' ').trim().slice(0, 12);
-  var pid = pidOf_(d);
+  var pid = cleanPid_(d.pid);
   var score = Math.floor(Number(d.score));
   if (!GAMES[game]) return json_({ ok: false, error: 'bad game' });
   if (!name) return json_({ ok: false, error: 'name' });
   if (!pid) return json_({ ok: false, error: 'pid' });
-  if (!(score >= 0 && score <= MAX_SCORE[game])) return json_({ ok: false, error: 'score' });
+  if (!(score >= 0 && score <= GAMES[game].max)) return json_({ ok: false, error: 'score' });
 
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    sheet_().appendRow([new Date(), game, safe_(name), "'" + pid, score]);
+    var sh = playerSheet_(), rows = sh.getDataRange().getValues(), now = new Date(), r = 0;
+    for (var i = 1; i < rows.length; i++) if (String(rows[i][0]) === pid) { r = i + 1; break; }
+    var earned = 0, best = 0;
+    if (r) {
+      var last = rows[r - 1][6] instanceof Date ? rows[r - 1][6].getTime() : 0;
+      // nobody can earn points faster than the games allow
+      if (last && score > (now.getTime() - last) / 1000 * RATE + SLACK) return json_({ ok: false, error: 'too_fast' });
+      earned = Number(rows[r - 1][2]) || 0;
+      best = Number(rows[r - 1][GAMES[game].col - 1]) || 0;
+    } else {
+      sh.appendRow(["'" + pid, safe_(name), 0, 0, 0, 0, now, now]);
+      r = sh.getLastRow();
+    }
+    earned += score; best = Math.max(best, score);
+    sh.getRange(r, 2).setValue(safe_(name));
+    sh.getRange(r, 3).setValue(earned);
+    sh.getRange(r, GAMES[game].col).setValue(best);
+    sh.getRange(r, 7).setValue(now);
+    scoreSheet_().appendRow([now, game, safe_(name), "'" + pid, score]);
   } finally {
     lock.releaseLock();
   }
-  var list = ranking_(game);
-  var rank = rankOf_(list, pid), best = rank ? list[rank - 1].score : score;
+  var all = players_(), rank = 0, sorted = sorted_(all, game);
+  for (var j = 0; j < sorted.length; j++) if (sorted[j].pid === pid) { rank = j + 1; break; }
+  return json_({ ok: true, rank: rank, best: best, total: earned, top: board_(all, game) });
+}
+
+function players_() {
+  var v = playerSheet_().getDataRange().getValues(), out = [];
+  for (var i = 1; i < v.length; i++) {
+    if (!v[i][0]) continue;
+    out.push({ row: i + 1, pid: String(v[i][0]), name: String(v[i][1]).replace(/^'/, ''), earned: Number(v[i][2]) || 0,
+      fly: Number(v[i][3]) || 0, match: Number(v[i][4]) || 0, stack: Number(v[i][5]) || 0 });
+  }
+  return out;
+}
+
+function sorted_(rows, game) {
+  return rows.filter(function (p) { return p[game] > 0; }).sort(function (a, b) { return b[game] - a[game] || a.row - b.row; });
+}
+
+function board_(rows, game) {
+  return sorted_(rows, game).slice(0, TOP_N).map(function (p) { return { name: p.name, score: p[game] }; });
+}
+
+/* ---------------- rewards ---------------- */
+
+/** A player's points and what they can redeem. */
+function me_(d) {
+  var pid = cleanPid_(d.pid);
+  if (!pid) return json_({ ok: false, error: 'pid' });
+  var me = null;
+  players_().forEach(function (p) { if (p.pid === pid) me = p; });
+  var mine = redeemed_(pid, '');
   return json_({
-    ok: true, rank: rank, best: best, top: list.slice(0, TOP_N).map(publicRow_),
-    canSpin: rank > 0 && rank <= TOP_N && spinsToday_(game, pid) < SPINS_PER_GAME,
+    ok: true, total: me ? me.earned : 0,
+    best: me ? { fly: me.fly, match: me.match, stack: me.stack } : { fly: 0, match: 0, stack: 0 },
+    rewards: rewards_().map(function (r) { var o = publicReward_(r); o.redeemed = !!mine[r.tier]; return o; }),
   });
 }
 
-/** Best score per player, highest first (earlier time wins ties). */
-function ranking_(game) {
-  var values = sheet_().getDataRange().getValues();
-  var bestBy = {}, today = day_(new Date());
-  for (var i = 1; i < values.length; i++) {
-    var row = values[i];
-    if (row[1] !== game) continue;
-    if (DAILY && !(row[0] instanceof Date && day_(row[0]) === today)) continue;
-    var pid = String(row[3]);
-    var score = Number(row[4]);
-    var t = row[0] instanceof Date ? row[0].getTime() : 0;
-    var name = String(row[2]).replace(/^'/, '');
-    var cur = bestBy[pid];
-    if (!cur || score > cur.score) bestBy[pid] = { name: name, pid: pid, score: score, t: t };
-  }
-  var list = Object.keys(bestBy).map(function (k) { return bestBy[k]; });
-  list.sort(function (a, b) { return b.score - a.score || a.t - b.t; });
-  return list;
-}
-
-/** Calendar day in Hong Kong, e.g. 2026-11-15. */
-function day_(d) { return Utilities.formatDate(d, TZ, 'yyyy-MM-dd'); }
-
-function rankOf_(list, pid) {
-  for (var i = 0; i < list.length; i++) if (list[i].pid === pid) return i + 1;
-  return 0;
-}
-
-function publicRow_(r) { return { name: r.name, score: r.score }; }
-
-/* ---------------- lucky wheel ---------------- */
-
-/** For each game: rank, whether this player may still spin, and prizes still waiting for a phone number. */
-function spinStatus_(d) {
-  var pid = pidOf_(d);
-  if (!pid) return json_({ ok: false, error: 'pid' });
-  var games = {};
-  Object.keys(GAMES).forEach(function (g) {
-    var rank = rankOf_(ranking_(g), pid);
-    var draws = drawsFor_(g, pid);
-    games[g] = {
-      rank: rank,
-      canSpin: rank > 0 && rank <= TOP_N && spinsToday_(g, pid) < SPINS_PER_GAME,
-      prizes: draws.map(function (r) { return r.prize; }),
-      toClaim: draws.filter(function (r) { return r.win && !r.phone; }).map(function (r) { return r.prize; }),
-    };
-  });
-  return json_({ ok: true, prizes: wheel_(), games: games, daily: DAILY });
-}
-
-function spin_(d) {
-  var game = String(d.game || '');
-  var pid = pidOf_(d);
-  if (!GAMES[game]) return json_({ ok: false, error: 'bad game' });
-  if (!pid) return json_({ ok: false, error: 'pid' });
-
-  var lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    var list = ranking_(game), rank = rankOf_(list, pid);
-    if (!rank || rank > TOP_N) return json_({ ok: false, error: 'not_top' });
-    if (spinsToday_(game, pid) >= SPINS_PER_GAME) return json_({ ok: false, error: 'used' });
-
-    var pool = prizeRows_().filter(function (p) { return p.weight > 0 && (p.stock === null || p.stock > 0); });
-    if (!pool.length) return json_({ ok: false, error: 'no_prizes' });
-    var total = pool.reduce(function (s, p) { return s + p.weight; }, 0);
-    var r = Math.random() * total, pick = pool[pool.length - 1];
-    for (var i = 0; i < pool.length; i++) { r -= pool[i].weight; if (r < 0) { pick = pool[i]; break; } }
-
-    if (pick.stock !== null) prizeSheet_().getRange(pick.row, 3).setValue(pick.stock - 1);
-    drawSheet_().appendRow([new Date(), game, safe_(list[rank - 1].name), "'" + pid, rank, pick.name, '']);
-
-    var wheel = wheel_(), index = 0;
-    for (var j = 0; j < wheel.length; j++) if (wheel[j].row === pick.row) { index = j; break; }
-    return json_({ ok: true, index: index, prize: pick.name, win: !NO_PRIZE.test(pick.name), prizes: wheel });
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-/** A winner leaves a phone number for every prize of theirs in this game that has none yet. */
-function claim_(d) {
-  var game = String(d.game || '');
-  var pid = pidOf_(d);
+function redeem_(d) {
+  var pid = cleanPid_(d.pid);
+  var tier = String(d.tier || '').trim();
   var phone = String(d.phone || '').replace(/\D/g, '');
-  if (!GAMES[game]) return json_({ ok: false, error: 'bad game' });
   if (!pid) return json_({ ok: false, error: 'pid' });
   if (!/^[4-9]\d{7}$/.test(phone)) return json_({ ok: false, error: 'phone' });
 
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    var sh = drawSheet_(), values = sh.getDataRange().getValues(), mine = [], claimedBefore = false;
-    for (var i = 1; i < values.length; i++) {
-      var row = values[i];
-      if (String(row[6] || '').replace(/\D/g, '') === phone) claimedBefore = true;
-      if (row[1] === game && String(row[3]) === pid && !NO_PRIZE.test(String(row[5])) && !String(row[6] || '').trim()) mine.push(i + 1);
-    }
-    if (!mine.length) return json_({ ok: false, error: 'nothing' });
-    if (claimedBefore) {
-      // this number already has a prize: void the new win and put the prize back in stock
-      mine.forEach(function (r) {
-        sh.getRange(r, 7).setValue(VOID_MARK + '（' + phone + '）');
-        restock_(String(sh.getRange(r, 6).getValue()));
-      });
-      return json_({ ok: false, error: 'already' });
-    }
-    // one prize per number: keep the first win, void any others still waiting
-    sh.getRange(mine[0], 7).setValue("'" + phone);
-    mine.slice(1).forEach(function (r) { sh.getRange(r, 7).setValue(VOID_MARK + '（' + phone + '）'); restock_(String(sh.getRange(r, 6).getValue())); });
-    return json_({ ok: true });
+    var reward = null, me = null;
+    rewards_().forEach(function (r) { if (r.tier === tier) reward = r; });
+    if (!reward) return json_({ ok: false, error: 'bad reward' });
+    players_().forEach(function (p) { if (p.pid === pid) me = p; });
+    if (!me || me.earned < reward.need) return json_({ ok: false, error: 'not_enough' });
+    if (redeemed_(pid, phone)[tier]) return json_({ ok: false, error: 'already' });
+    if (reward.stock !== null && reward.stock <= 0) return json_({ ok: false, error: 'out' });
+
+    if (reward.stock !== null) rewardSheet_().getRange(reward.row, 4).setValue(reward.stock - 1);
+    redeemSheet_().appendRow([new Date(), tier, reward.name, safe_(me.name), "'" + pid, me.earned, "'" + phone, '']);
+    return json_({ ok: true, tier: tier, name: reward.name });
   } finally {
     lock.releaseLock();
   }
 }
 
-/** Put one back into a prize's stock (when a win is voided). */
-function restock_(name) {
-  prizeRows_().forEach(function (p) {
-    if (p.name === name && p.stock !== null) prizeSheet_().getRange(p.row, 3).setValue(p.stock + 1);
-  });
-}
-
-/** Spins this player has used today in one game. */
-function spinsToday_(game, pid) {
-  var values = drawSheet_().getDataRange().getValues(), n = 0, today = day_(new Date());
-  for (var i = 1; i < values.length; i++) {
-    if (values[i][1] === game && String(values[i][3]) === pid && (!DAILY || (values[i][0] instanceof Date && day_(values[i][0]) === today))) n++;
-  }
-  return n;
-}
-
-/** Prizes shown on the wheel (the ones with a chance above 0). */
-function wheel_() {
-  return prizeRows_().filter(function (p) { return p.weight > 0; })
-    .map(function (p) { return { name: p.name, color: p.color, row: p.row, out: p.stock !== null && p.stock <= 0 }; });
-}
-
-function prizeRows_() {
-  var values = prizeSheet_().getDataRange().getValues(), out = [];
-  for (var i = 1; i < values.length; i++) {
-    var name = String(values[i][0] || '').trim();
-    if (!name) continue;
-    var stock = values[i][2] === '' || values[i][2] === null ? null : Math.max(0, Math.floor(Number(values[i][2]) || 0));
-    out.push({ row: i + 1, name: name, weight: Math.max(0, Number(values[i][1]) || 0), stock: stock, color: String(values[i][3] || '').trim() });
+/** Tiers already redeemed by this player or this phone number: { 'Tier 1': true, ... } */
+function redeemed_(pid, phone) {
+  var v = redeemSheet_().getDataRange().getValues(), out = {};
+  for (var i = 1; i < v.length; i++) {
+    if (String(v[i][4]) === pid || (phone && String(v[i][6]).replace(/\D/g, '') === phone)) out[String(v[i][1])] = true;
   }
   return out;
 }
 
-function drawsFor_(game, pid) {
-  var values = drawSheet_().getDataRange().getValues(), out = [];
-  for (var i = 1; i < values.length; i++) {
-    if (values[i][1] === game && String(values[i][3]) === pid) {
-      var prize = String(values[i][5]);
-      out.push({ prize: prize, win: !NO_PRIZE.test(prize), phone: String(values[i][6] || '').trim() });
-    }
+function rewards_() {
+  var v = rewardSheet_().getDataRange().getValues(), out = [];
+  for (var i = 1; i < v.length; i++) {
+    var tier = String(v[i][0] || '').trim(), name = String(v[i][1] || '').trim();
+    if (!tier || !name) continue;
+    var stock = v[i][3] === '' || v[i][3] === null ? null : Math.max(0, Math.floor(Number(v[i][3]) || 0));
+    out.push({ row: i + 1, tier: tier, name: name, need: Math.max(0, Math.floor(Number(v[i][2]) || 0)), stock: stock });
   }
   return out;
 }
+
+function publicReward_(r) { return { tier: r.tier, name: r.name, need: r.need, out: r.stock !== null && r.stock <= 0 }; }
 
 /* ---------------- sheets ---------------- */
-
-/** Player ID sent by the page. The previous version of the page sent a phone number instead,
-    which still works as an ID so nothing breaks while the page is being updated. */
-function pidOf_(d) {
-  var pid = cleanPid_(d.pid);
-  if (pid) return pid;
-  var phone = String(d.phone || '').replace(/\D/g, '');
-  return /^[4-9]\d{7}$/.test(phone) && d.action !== 'claim' ? phone : '';
-}
 
 /** The player ID is a random code made on the player's phone (letters, digits, - and _). */
 function cleanPid_(v) {
@@ -262,31 +180,21 @@ function cleanPid_(v) {
 /** Names starting with = + - @ are stored as text so the sheet never runs them as formulas. */
 function safe_(name) { return /^[=+\-@]/.test(name) ? "'" + name : name; }
 
-function sheet_() {
-  var sh = getSheet_(SHEET_NAME, ['時間', '遊戲', '暱稱', '玩家編號', '分數']);
-  if (sh.getRange(1, 4).getValue() === '手機') sh.getRange(1, 4).setValue('玩家編號');  // older version
-  return sh;
-}
+function playerSheet_() { return getSheet_('Players', ['玩家編號', '暱稱', '累計分數', '飛飛挑戰最高', '消消樂最高', '層層疊最高', '最後提交時間', '加入時間']); }
+function scoreSheet_() { return getSheet_('Scores', ['時間', '遊戲', '暱稱', '玩家編號', '分數']); }
+function redeemSheet_() { return getSheet_('Redeem', ['時間', '級別', '獎品', '暱稱', '玩家編號', '兌換時累計分數', '手機', '狀態（自己填，例如：已發）']); }
 
-function drawSheet_() {
-  var sh = getSheet_(DRAW_SHEET, ['時間', '遊戲', '暱稱', '玩家編號', '名次', '獎品', '領獎手機']);
-  if (sh.getRange(1, 4).getValue() === '手機') {   // older version of this sheet
-    sh.getRange(1, 4).setValue('玩家編號'); sh.getRange(1, 7).setValue('領獎手機');
-  }
-  return sh;
-}
-
-/** Created with placeholder prizes the first time; edit the rows in the sheet. */
-function prizeSheet_() {
+/** Created with the four tiers the first time; edit the rows in the sheet. */
+function rewardSheet_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sh = ss.getSheetByName(PRIZE_SHEET);
+  var sh = ss.getSheetByName('Rewards');
   if (!sh) {
-    sh = ss.insertSheet(PRIZE_SHEET);
-    sh.appendRow(['獎品名稱', '機會（數字越大越易抽中）', '剩餘數量（留空 = 無限）', '顏色（可留空）']);
-    sh.appendRow(['獎品 A（待定）', 5, 5, '']);
-    sh.appendRow(['獎品 B（待定）', 10, 10, '']);
-    sh.appendRow(['獎品 C（待定）', 15, 20, '']);
-    sh.appendRow(['多謝參與', 70, '', '']);
+    sh = ss.insertSheet('Rewards');
+    sh.appendRow(['級別', '獎品', '所需累計分數', '剩餘數量（留空 = 無限）']);
+    sh.appendRow(['Tier 4', '滿 $60 減 $5 優惠券', 30, '']);
+    sh.appendRow(['Tier 3', '滿 $60 減 $10 優惠券', 1000, '']);
+    sh.appendRow(['Tier 2', 'HK$20 優惠券', 4000, '']);
+    sh.appendRow(['Tier 1', '零感特薄系列各一包', 15000, 20]);
     sh.setFrozenRows(1);
   }
   return sh;
