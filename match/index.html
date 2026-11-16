@@ -5,19 +5,19 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#b9ecff">
 <title>Laurier 消消樂</title>
-<meta name="description" content="Laurier KAO LSSG New Package 小遊戲：三個相同圖案連成一線就消除，新包裝圖案雙倍分，挑戰排行榜！">
+<meta name="description" content="Laurier KAO LSSG New Package 小遊戲：三個相同圖案連成一線就消除，每消除一次得 1 分，挑戰排行榜！">
 <meta property="og:title" content="Laurier 消消樂">
-<meta property="og:description" content="三個相同圖案連成一線就消除，新包裝圖案雙倍分！衝入十大排行榜！">
+<meta property="og:description" content="三個相同圖案連成一線就消除，每消除一次得 1 分！">
 <meta property="og:image" content="../shared/assets/new2.png?v=3">
 <link rel="icon" href="../shared/assets/leaf.png?v=3">
 <link rel="apple-touch-icon" href="../shared/assets/leaf.png?v=3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Noto+Sans+HK:wght@500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../shared/common.css?v=11">
-<link rel="stylesheet" href="../shared/ip.css?v=11">
-<script src="../shared/ip.js?v=11"></script>
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="../shared/common.css?v=12">
+<link rel="stylesheet" href="../shared/ip.css?v=12">
+<script src="../shared/ip.js?v=12"></script>
+<link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 <div class="bubbles" aria-hidden="true"></div>
@@ -39,7 +39,7 @@
     </div>
     <p class="howto-cap">3 個<b>相同圖案</b>連成一線就消除！</p>
   </div>
-  <p class="tagline">新包裝圖案（有 <span class="new-tag">NEW</span>）<br>每格消除得<b>雙倍分</b> 💚</p>
+  <p class="tagline">每消除一次得 <b>1 分</b>，連鎖消除再加分 💚</p>
 
   <button class="btn pulse" id="play" type="button">開始遊戲</button>
   <div class="btn-row">
@@ -77,9 +77,9 @@
 
     <form class="submit-form" id="submitForm" novalidate>
       <div class="fields">
-        <label for="nick">暱稱（會顯示喺排行榜，唔使留電話）</label>
+        <label for="nick">改個暱稱儲存分數（之後每局自動儲存）</label>
         <input id="nick" name="nick" type="text" maxlength="12" autocomplete="nickname" placeholder="例如：Laurier仔">
-        <button class="btn teal small" type="submit">提交分數 🏆</button>
+        <button class="btn teal small" type="submit">儲存分數 🏆</button>
       </div>
       <p class="form-msg"></p>
     </form>
@@ -95,7 +95,7 @@
 <div class="modal" id="lbModal" hidden>
   <div class="card pop">
     <button class="close" type="button" data-close aria-label="關閉">×</button>
-    <h2>🏆 今日十大排行榜</h2>
+    <h2>🏆 十大排行榜</h2>
     <div class="sub">消消樂</div>
     <ol class="lb" id="lbList"></ol>
     <p class="lb-note" id="lbNote"></p>
@@ -109,18 +109,17 @@
     <ol>
       <li>👉 滑動（或者撳兩格）交換相鄰嘅包裝。</li>
       <li>✨ 三個或以上<b>相同圖案</b>連成一線就消除。</li>
-      <li>💚 有 NEW 標記嘅<b>新包裝圖案</b>，每格雙倍分！</li>
+      <li>💚 每消除一次得 1 分；跌落嚟自動連鎖消除，每次都再加 1 分！</li>
       <li>⚡ 連四個：變「直線清除」包裝；連五個或者 L／T 形：變「葉仔炸彈」！</li>
-      <li>⏱️ 限時 60 秒，連鎖消除分數越嚟越多。</li>
-      <li>🏆 留低暱稱就可以上排行榜；入咗十大可以轉輪盤抽獎，抽中獎品先需要留電話領獎！</li>
+      <li>⏱️ 限時 60 秒，消除得越多次分數越高。</li>
+      <li>🏆 每得 1 分，你嘅累計積分就加 1 分；儲夠積分可以喺遊戲大廳換獎品！</li>
     </ol>
     <button class="btn small" type="button" data-close>明白！</button>
   </div>
 </div>
 
-<script src="../shared/config.js?v=4"></script>
-<script src="../shared/common.js?v=11"></script>
-<script src="../shared/wheel.js?v=11"></script>
-<script src="game.js?v=11"></script>
+<script src="../shared/config.js?v=12"></script>
+<script src="../shared/common.js?v=12"></script>
+<script src="game.js?v=12"></script>
 </body>
 </html>
