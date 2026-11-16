@@ -231,6 +231,25 @@ function getSheet_(name, header) {
   return sh;
 }
 
+/**
+ * 一次性清理：刪走積分制推出之前嘅測試分數。
+ * 用法：喺 Apps Script 上面嘅函式選單揀「deleteOldTestScores」，撳「執行」。
+ * 積分制推出時間 = 「Players」分頁最早一位玩家嘅加入時間；Scores 分頁入面早過呢個時間嘅紀錄會被刪走。
+ */
+function deleteOldTestScores() {
+  var p = playerSheet_().getDataRange().getValues(), start = null;
+  for (var i = 1; i < p.length; i++) {
+    var t = p[i][7] instanceof Date ? p[i][7] : null;
+    if (t && (!start || t < start)) start = t;
+  }
+  if (!start) { Logger.log('未有積分制玩家，唔使刪。'); return; }
+  var sh = scoreSheet_(), v = sh.getDataRange().getValues(), removed = 0;
+  for (var r = v.length - 1; r >= 1; r--) {   // from the bottom so row numbers stay valid
+    if (!(v[r][0] instanceof Date) || v[r][0] < start) { sh.deleteRow(r + 1); removed++; }
+  }
+  Logger.log('積分制推出時間：' + Utilities.formatDate(start, TZ, 'yyyy-MM-dd HH:mm') + '；刪走咗 ' + removed + ' 行測試紀錄。');
+}
+
 function json_(o) {
   return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 }

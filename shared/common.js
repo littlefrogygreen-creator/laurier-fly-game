@@ -229,7 +229,12 @@
     }
     form.addEventListener('submit', (e) => { e.preventDefault(); save(); });
 
+    // the "分享成績" button on the game-over card shares this game's latest score
+    const card = form.closest('.card'), shareBtn = card && card.querySelector('[data-share]');
+    if (shareBtn) shareBtn.addEventListener('click', () => { if (window.Laurier.Share) window.Laurier.Share.open(game, getScore()); });
+
     return () => {
+      if (shareBtn) shareBtn.hidden = getScore() <= 0;
       btn.disabled = false; msg.textContent = ''; form.classList.remove('done');
       if (getScore() <= 0) { form.classList.add('done'); msg.textContent = '今次未有分數，再試一次！'; return; }
       if (store.get('laurier_nick', '')) save();   // nickname already known → save straight away
