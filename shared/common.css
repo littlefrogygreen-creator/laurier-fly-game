@@ -220,3 +220,50 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid 
 .link-btn { display: block; width: 100%; margin-top: 10px; border: 0; background: none; font: 600 13px var(--font); color: var(--teal); text-decoration: underline; }
 .submit-form .form-msg .gain { font-size: 22px; color: var(--green); }
 .submit-form.done .form-msg { line-height: 1.5; }
+
+/* ---------- points and rewards ---------- */
+.wallet-card { width: 100%; text-align: left; padding: 16px 14px 12px; }
+.pts-row { display: flex; align-items: baseline; gap: 6px; }
+.pts-row .pts { font-size: 54px; line-height: 1; font-weight: 800; color: var(--green); text-shadow: 0 3px 0 var(--green-light); font-variant-numeric: tabular-nums; }
+.pts-row span { font-weight: 800; color: var(--teal-dark); font-size: 18px; }
+.pts-next { margin: 6px 0 8px; font-weight: 700; font-size: 14px; color: var(--teal-dark); }
+.pts-bar { height: 12px; border-radius: 99px; background: var(--mint); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,.08); }
+.pts-bar i { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--green), #a6e86b); transition: width .6s ease; }
+.tiers { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tiers li { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 14px; background: var(--mint); }
+.tiers li.ready { background: #fff4c2; }
+.t-tier { flex: none; padding: 2px 8px; border-radius: 8px; font-size: 11.5px; font-weight: 800; color: #fff; background: var(--teal); white-space: nowrap; }
+.t-info { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.t-info b { font-size: 15px; }
+.t-info small { font-size: 12px; font-weight: 700; color: #5a7c80; }
+.tiers .btn { flex: none; padding: 6px 16px; font-size: 15px; }
+.t-wait { flex: none; font-size: 12.5px; font-weight: 700; color: #6c8b8e; }
+.t-done { flex: none; font-size: 13px; font-weight: 800; color: var(--green); }
+.redeem-what { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0 0; font-size: 18px; }
+.redeem-ok { font-weight: 700; line-height: 1.6; }
+.redeem-ok b { font-size: 22px; color: var(--green); }
+.pts-label { font-weight: 800; font-size: 13px; color: #5a7c80; margin-right: 4px; align-self: center; }
+.rewards-card { width: min(400px, 100%); text-align: left; }
+.rewards-card h2 { text-align: center; }
+.rewards-card .pts-row .pts { font-size: 46px; }
+
+/* 兌換獎品 button */
+.rewards-btn {
+  width: min(380px, 100%); display: flex; align-items: center; gap: 10px; text-align: left; margin-top: 14px; padding: 10px 12px;
+  border: 3px solid #fff; border-radius: 22px; font-family: var(--font); color: #6b3a00; cursor: pointer;
+  background: linear-gradient(135deg, #fff3b8, #ffd25a); box-shadow: 0 5px 0 #d9a520, 0 12px 22px rgba(217,165,32,.3);
+}
+.rewards-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #d9a520; }
+.rewards-btn .rb-icon { font-size: 30px; animation: rbWiggle 2s ease-in-out infinite; }
+@keyframes rbWiggle { 0%, 80%, 100% { rotate: 0deg; } 85% { rotate: -12deg; } 90% { rotate: 12deg; } 95% { rotate: -6deg; } }
+.rewards-btn .rb-text { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
+.rewards-btn .rb-text b { font-size: 20px; }
+.rewards-btn .rb-text small { font-size: 13px; font-weight: 700; color: #8a5a10; }
+.rewards-btn .rb-go { flex: none; padding: 8px 14px; border-radius: 99px; font-weight: 800; font-size: 15px; color: #fff; background: linear-gradient(180deg, #ff9f3d, #f07a12); box-shadow: 0 4px 0 #c25f08; }
+.rewards-btn.small { margin-top: 12px; padding: 8px 10px; }
+.rewards-btn.small .rb-icon { font-size: 24px; }
+.rewards-btn.small .rb-text b { font-size: 17px; }
+html.ip .rewards-btn { color: #7a1d4a; background: linear-gradient(135deg, #fff0f6, #ffc4dc); box-shadow: 0 5px 0 #e0789f, 0 12px 22px rgba(224,120,159,.3); }
+html.ip .rewards-btn .rb-text small { color: #9a4a6c; }
+html.ip .rewards-btn .rb-go { background: linear-gradient(180deg, #ff8fbe, #e0457b); box-shadow: 0 4px 0 #b8325f; }
+@media (prefers-reduced-motion: reduce) { .rewards-btn .rb-icon { animation: none; } }

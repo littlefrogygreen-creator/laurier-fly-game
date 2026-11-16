@@ -14,10 +14,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Noto+Sans+HK:wght@500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="shared/common.css?v=13">
-<link rel="stylesheet" href="shared/ip.css?v=13">
-<script src="shared/ip.js?v=13"></script>
-<link rel="stylesheet" href="hub.css?v=13">
+<link rel="stylesheet" href="shared/common.css?v=14">
+<link rel="stylesheet" href="shared/ip.css?v=14">
+<script src="shared/ip.js?v=14"></script>
+<link rel="stylesheet" href="hub.css?v=14">
 </head>
 <body class="hub">
 <div class="bubbles" aria-hidden="true"></div>
@@ -38,6 +38,11 @@
       <li><b>1</b>秒瞬吸</li>
       <li>日用 · 夜用</li>
     </ul>
+    <button class="rewards-btn" type="button" data-rewards>
+      <span class="rb-icon" aria-hidden="true">🎁</span>
+      <span class="rb-text"><b>兌換獎品</b><small>我有 <span data-pts>0 分</span></small></span>
+      <span class="rb-go">睇獎品</span>
+    </button>
   </header>
 
   <section aria-labelledby="pickTitle">
@@ -91,13 +96,7 @@
 
   <section class="wallet" aria-labelledby="walletTitle">
     <h2 class="sec-title" id="walletTitle">🎁 我的積分</h2>
-    <div class="card wallet-card">
-      <div class="pts-row"><b class="pts" id="myPts">0</b><span>分</span></div>
-      <p class="pts-next" id="ptsNext">玩遊戲每得 1 分，就儲 1 分積分。</p>
-      <div class="pts-bar" aria-hidden="true"><i id="ptsFill"></i></div>
-      <ul class="tiers" id="tiers"></ul>
-      <p class="lb-note">積分全年累計，每月換新遊戲都唔會清零，換獎亦唔會扣分。每款獎品每人限換一次，換獎時先需要留手機號碼。</p>
-    </div>
+    <div class="card wallet-card" data-rewards-inline></div>
   </section>
 
   <section class="board-sec" aria-labelledby="lbTitle">
@@ -118,16 +117,11 @@
   <footer class="foot">玩完一局改個暱稱，之後每局分數自動儲存。<br>手機號碼只喺換獎時需要，唔會公開，只用嚟聯絡你領獎。</footer>
 </main>
 
-<div class="modal" id="redeemModal" hidden>
-  <div class="card pop">
-    <button class="close" type="button" data-close aria-label="關閉">×</button>
-    <h2>🎁 兌換獎品</h2>
-    <div id="redeemBody"></div>
-  </div>
-</div>
 
-<script src="shared/config.js?v=13"></script>
-<script src="shared/common.js?v=13"></script>
-<script src="hub.js?v=13"></script>
+
+<script src="shared/config.js?v=14"></script>
+<script src="shared/common.js?v=14"></script>
+<script src="shared/rewards.js?v=14"></script>
+<script src="hub.js?v=14"></script>
 </body>
 </html>

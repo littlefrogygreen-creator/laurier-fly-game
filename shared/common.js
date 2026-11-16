@@ -216,6 +216,7 @@
         const res = await LB.submit(game, name, score);
         if (!res || !res.ok) throw new Error((res && res.error) || 'fail');
         store.set('laurier_total', res.total);
+        if (window.Laurier.Rewards) window.Laurier.Rewards.setTotal(res.total);
         msg.innerHTML = '<b class="gain">+' + score + ' 分</b> 已儲存<br>累計 <b>' + res.total + '</b> 分' +
           (res.rank ? ' · 呢款遊戲排第 ' + res.rank + ' 名' + (res.rank <= 10 ? ' 🎉' : '') : '');
       } catch (err) {
