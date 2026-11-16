@@ -7,17 +7,17 @@
 <title>Laurier 新包裝層層疊</title>
 <meta name="description" content="Laurier KAO LSSG New Package 小遊戲：撳屏幕將新包裝疊高，疊得越高分數越高，挑戰排行榜！">
 <meta property="og:title" content="Laurier 新包裝層層疊">
-<meta property="og:description" content="將 Laurier 新包裝一層層疊上天，Perfect 有額外加分，衝入十大排行榜！">
+<meta property="og:description" content="將 Laurier 新包裝一層層疊上天，每疊一層得 1 分！">
 <meta property="og:image" content="../shared/assets/new1.png?v=3">
 <link rel="icon" href="../shared/assets/leaf.png?v=3">
 <link rel="apple-touch-icon" href="../shared/assets/leaf.png?v=3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Noto+Sans+HK:wght@500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../shared/common.css?v=11">
-<link rel="stylesheet" href="../shared/ip.css?v=11">
-<script src="../shared/ip.js?v=11"></script>
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="../shared/common.css?v=12">
+<link rel="stylesheet" href="../shared/ip.css?v=12">
+<script src="../shared/ip.js?v=12"></script>
+<link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 <div class="bubbles" aria-hidden="true"></div>
@@ -36,7 +36,7 @@
   <img class="ip-art ip-mascot" data-ip-art="mascot.png" alt="">
   <span class="eyebrow">Laurier KAO · LSSG New Package</span>
   <h1 class="game-title">層層疊<small>新包裝 · 疊上天</small></h1>
-  <p class="tagline">將新包裝一層層疊上天！<br>對得準有 <b>Perfect</b> 加分 ✨</p>
+  <p class="tagline">將新包裝一層層疊上天！<br>每疊一層得 <b>1 分</b> ✨</p>
 
   <div class="demo" aria-hidden="true">
     <img src="../shared/assets/new2.png?v=3" alt="" class="d3">
@@ -61,9 +61,9 @@
 
     <form class="submit-form" id="submitForm" novalidate>
       <div class="fields">
-        <label for="nick">暱稱（會顯示喺排行榜，唔使留電話）</label>
+        <label for="nick">改個暱稱儲存分數（之後每局自動儲存）</label>
         <input id="nick" name="nick" type="text" maxlength="12" autocomplete="nickname" placeholder="例如：Laurier仔">
-        <button class="btn teal small" type="submit">提交分數 🏆</button>
+        <button class="btn teal small" type="submit">儲存分數 🏆</button>
       </div>
       <p class="form-msg"></p>
     </form>
@@ -79,7 +79,7 @@
 <div class="modal" id="lbModal" hidden>
   <div class="card pop">
     <button class="close" type="button" data-close aria-label="關閉">×</button>
-    <h2>🏆 今日十大排行榜</h2>
+    <h2>🏆 十大排行榜</h2>
     <div class="sub">新包裝 · 層層疊</div>
     <ol class="lb" id="lbList"></ol>
     <p class="lb-note" id="lbNote"></p>
@@ -93,18 +93,17 @@
     <ol>
       <li>↔️ 新包裝會喺上面左右移動。</li>
       <li>👆 撳一下屏幕（或者按空白鍵），包裝就會跌落去疊喺頂。</li>
-      <li>🎯 對得啱啱好係 <b>Perfect</b>，多加 1 分；連續 Perfect 仲有額外獎勵！</li>
+      <li>🎯 每疊一層得 1 分；對得啱啱好係 <b>Perfect</b>，座塔會更穩陣！</li>
       <li>⚠️ 疊歪咗，上面太重偏出下面嘅包裝，成座就會塌。</li>
       <li>⚡ 越疊越高，包裝移動得越快！</li>
-      <li>🏆 留低暱稱就可以上排行榜；入咗十大可以轉輪盤抽獎，抽中獎品先需要留電話領獎！</li>
+      <li>🏆 每得 1 分，你嘅累計積分就加 1 分；儲夠積分可以喺遊戲大廳換獎品！</li>
     </ol>
     <button class="btn small" type="button" data-close>明白！</button>
   </div>
 </div>
 
-<script src="../shared/config.js?v=4"></script>
-<script src="../shared/common.js?v=11"></script>
-<script src="../shared/wheel.js?v=11"></script>
-<script src="game.js?v=11"></script>
+<script src="../shared/config.js?v=12"></script>
+<script src="../shared/common.js?v=12"></script>
+<script src="game.js?v=12"></script>
 </body>
 </html>

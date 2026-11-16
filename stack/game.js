@@ -86,11 +86,10 @@
       return;
     }
     cur.y = topY() - cur.h + OVERLAP;
-    let gain = 1, label = '+1';
+    let gain = 1, label = '+1', perfect = false;   // every layer is worth 1 point
     if (Math.abs(off) <= PERFECT) {
-      cur.x = b.x; perfects++; streak++; bestStreak = Math.max(bestStreak, streak);
-      gain = 2 + (streak >= 3 ? 1 : 0);
-      label = streak >= 3 ? 'Perfect ×' + streak + '! +' + gain : 'Perfect! +' + gain;
+      perfect = true; cur.x = b.x; perfects++; streak++; bestStreak = Math.max(bestStreak, streak);
+      label = streak >= 3 ? 'Perfect ×' + streak + '!' : 'Perfect!';
       Audio.sfx('special');
       rings.push({ x: cur.x, y: cur.y + cur.h - OVERLAP, t: 0 }); flash = Math.min(.5, .2 + streak * .06);
       cur.glow = 1;
@@ -104,7 +103,7 @@
     tower.push(cur); cur = null; placed++;
     score += gain;
     $('#score').textContent = score; $('#height').textContent = tower.length + ' 層';
-    floaters.push({ x: tower[tower.length - 1].x, y: topY() - 20, t: 0, text: label, perfect: gain > 1 });
+    floaters.push({ x: tower[tower.length - 1].x, y: topY() - 20, t: 0, text: label, perfect });
     if (tower.length % 10 === 0) floaters.push({ x: W / 2, y: topY() - 120, t: 0, text: tower.length + ' 層！⚡', big: true });
     shake = 0.08;
 
@@ -169,7 +168,7 @@
     show('over');
   }
 
-  const resetForm = bindSubmit($('#submitForm'), GAME, () => score, (res, name) => openLb(res.top, name, res.best));
+  const resetForm = bindSubmit($('#submitForm'), GAME, () => score);
 
   function openLb(rows, name, sc) {
     $('#lbModal').hidden = false;

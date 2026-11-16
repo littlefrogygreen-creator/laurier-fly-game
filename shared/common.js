@@ -126,11 +126,17 @@
       list.sort((a, b) => b.score - a.score || a.t - b.t);
       store.set(localKey(game), list.slice(0, 50));
       const rank = list.findIndex((r) => r.pid === pid) + 1;
-      return { ok: true, top: list.slice(0, 10).map((r) => ({ name: r.name, score: r.score })), rank, best: list[rank - 1].score };
+      const total = store.get('laurier_local_total', 0) + score; store.set('laurier_local_total', total);
+      return { ok: true, top: list.slice(0, 10).map((r) => ({ name: r.name, score: r.score })), rank, best: list[rank - 1].score, total };
     }
 
     async function withTimeout(p, ms) {
       return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+    }
+    // text/plain body avoids a CORS preflight, which Apps Script cannot answer
+    async function call(body, ms) {
+      const r = await withTimeout(fetch(url, { method: 'POST', body: JSON.stringify(body) }), ms || 15000);
+      return r.json();
     }
 
     return {
@@ -150,34 +156,19 @@
         const r = await withTimeout(fetch(url + '?game=all&_=' + Date.now()), 12000);
         return r.json();
       },
-      /** Wheel prizes, or null when the leaderboard script has no lucky wheel yet. */
-      async prizes() {
-        if (!online) return null;
-        const r = await withTimeout(fetch(url + '?prizes=1&_=' + Date.now()), 12000);
-        const j = await r.json();
-        return j && j.ok && Array.isArray(j.prizes) ? j.prizes : null;
+      /** This player's accumulated points and the rewards they can redeem. */
+      async me() {
+        if (!online) return { ok: true, total: store.get('laurier_local_total', 0), rewards: [] };
+        return call({ action: 'me', pid: playerId() });
       },
-      async spinStatus() {
+      async redeem(tier, phone) {
         if (!online) return { ok: false, error: 'offline' };
-        const r = await withTimeout(fetch(url, { method: 'POST', body: JSON.stringify({ action: 'spinStatus', pid: playerId() }) }), 15000);
-        return r.json();
-      },
-      async spin(game) {
-        if (!online) return { ok: false, error: 'offline' };
-        const r = await withTimeout(fetch(url, { method: 'POST', body: JSON.stringify({ action: 'spin', game, pid: playerId() }) }), 20000);
-        return r.json();
-      },
-      async claim(game, phone) {
-        if (!online) return { ok: false, error: 'offline' };
-        const r = await withTimeout(fetch(url, { method: 'POST', body: JSON.stringify({ action: 'claim', game, phone, pid: playerId() }) }), 15000);
-        return r.json();
+        return call({ action: 'redeem', tier, phone, pid: playerId() });
       },
       async submit(game, name, score) {
         const pid = playerId();
         if (!online) return localSubmit(game, name, pid, score);
-        // text/plain body avoids a CORS preflight, which Apps Script cannot answer
-        const r = await withTimeout(fetch(url, { method: 'POST', body: JSON.stringify({ game, name, pid, score }) }), 15000);
-        return r.json();
+        return call({ game, name, pid, score });
       },
     };
   })();
@@ -208,42 +199,36 @@
     }
   }
 
-  /* Score submission form inside the game-over card. */
-  function bindSubmit(form, game, getScore, onDone) {
+  /* Score saving on the game-over card. The first time, the player picks a nickname; after that
+     every game's points are saved automatically. Returns a function to call at each game over. */
+  function bindSubmit(form, game, getScore) {
     const nameIn = $('[name=nick]', form);
     const msg = $('.form-msg', form), btn = $('button[type=submit]', form);
     nameIn.value = store.get('laurier_nick', '');
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+
+    async function save() {
       const name = nameIn.value.trim().replace(/\s+/g, ' ');
       if (!name || name.length > 12) { msg.textContent = '請輸入 1–12 個字嘅暱稱'; return; }
       store.set('laurier_nick', name);
-      btn.disabled = true; msg.textContent = '提交中…';
+      const score = getScore();
+      btn.disabled = true; form.classList.add('done'); msg.textContent = '儲存緊分數…';
       try {
-        const score = getScore();
         const res = await LB.submit(game, name, score);
         if (!res || !res.ok) throw new Error((res && res.error) || 'fail');
-        msg.textContent = res.rank && res.rank <= 10 ? '恭喜！你而家排第 ' + res.rank + ' 名 🎉' :
-          (res.rank ? '已記錄！你排第 ' + res.rank + ' 名，再努力衝入十大！' : '已記錄！');
-        form.classList.add('done');
-        // top 10 → offer the lucky wheel (only when the leaderboard script supports it)
-        if (res.canSpin && window.Laurier.Wheel) {
-          let b = $('.spin-cta', form);
-          if (!b) { b = document.createElement('button'); b.type = 'button'; b.className = 'btn spin-cta pulse'; form.appendChild(b); }
-          b.textContent = '🎡 你上咗榜！即刻抽獎'; b.hidden = false;
-          b.onclick = () => window.Laurier.Wheel.openFor(game, res.rank);
-          msg.textContent = '恭喜！你而家排第 ' + res.rank + ' 名，可以抽獎 🎉';
-          return;   // leaderboard stays one tap away; the spin button is the next step
-        }
-        onDone(res, name);
+        store.set('laurier_total', res.total);
+        msg.innerHTML = '<b class="gain">+' + score + ' 分</b> 已儲存<br>累計 <b>' + res.total + '</b> 分' +
+          (res.rank ? ' · 呢款遊戲排第 ' + res.rank + ' 名' + (res.rank <= 10 ? ' 🎉' : '') : '');
       } catch (err) {
-        msg.textContent = '提交失敗，請檢查網絡再試';
-        btn.disabled = false;
+        form.classList.remove('done'); btn.disabled = false;
+        msg.textContent = err.message === 'too_fast' ? '提交得太密，請遲啲再試' : '儲存失敗，請檢查網絡，再撳一次';
       }
-    });
+    }
+    form.addEventListener('submit', (e) => { e.preventDefault(); save(); });
+
     return () => {
       btn.disabled = false; msg.textContent = ''; form.classList.remove('done');
-      const b = $('.spin-cta', form); if (b) b.hidden = true;
+      if (getScore() <= 0) { form.classList.add('done'); msg.textContent = '今次未有分數，再試一次！'; return; }
+      if (store.get('laurier_nick', '')) save();   // nickname already known → save straight away
     };
   }
 

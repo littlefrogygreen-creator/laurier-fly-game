@@ -15,7 +15,7 @@
   let busy = false, playing = false, endPending = false;
   let score = 0, timeLeft = TIME, timer = null, hintTimer = null, lastTick = 0;
   let best = store.get('laurier_match_best', 0);
-  let stats = { moves: 0, maxCombo: 0, newCleared: 0 };
+  let stats = { moves: 0, maxCombo: 0, clears: 0 };
 
   window.Laurier.bubbles($('.bubbles'));
 
@@ -170,21 +170,14 @@
     }
     keep.forEach((k) => clear.delete(k));
 
-    // score
-    let pts = 0, newCount = 0, sr = 0, sc = 0;
-    clear.forEach((k) => {
-      const r = Math.floor(k / COLS), c = k % COLS, t = grid[r][c];
-      if (!t) return;
-      const base = t.type < 2 ? 20 : 10;
-      if (t.type < 2) newCount++;
-      pts += base * combo; sr += r; sc += c;
-    });
-    pts += fired.size * 30 * combo;
-    score += pts; stats.newCleared += newCount;
-    bumpScore();
-    if (clear.size) {
-      const e = fx('pts' + (newCount ? ' x2' : ''), 'left:' + ((sc / clear.size + .5) * size) + 'px;top:' + ((sr / clear.size + .5) * size) + 'px', 850);
-      e.textContent = '+' + pts + (newCount ? ' NEW×2' : '');
+    // score: every clear is worth 1 point (same pace as the other games)
+    let sr = 0, sc = 0, n = 0;
+    clear.forEach((k) => { const r = Math.floor(k / COLS), c = k % COLS; if (grid[r][c]) { sr += r; sc += c; n++; } });
+    if (n) {
+      score += 1; stats.clears++;
+      bumpScore();
+      const e = fx('pts', 'left:' + ((sc / n + .5) * size) + 'px;top:' + ((sr / n + .5) * size) + 'px', 850);
+      e.textContent = '+1';
     }
     Audio.sfx('match', combo);
 
@@ -352,7 +345,7 @@
   function startGame() {
     Audio.unlock(); Audio.start();
     score = 0; timeLeft = TIME; endPending = false; busy = false; sel = null;
-    stats = { moves: 0, maxCombo: 0, newCleared: 0 };
+    stats = { moves: 0, maxCombo: 0, clears: 0 };
     $('#score').textContent = '0'; $('#best').textContent = best;
     show('play-screen');
     layout(); freshBoard();
@@ -387,13 +380,13 @@
     if (isBest) { best = score; store.set('laurier_match_best', best); }
     $('#finalScore').textContent = score;
     $('#bestLine').textContent = isBest && score > 0 ? '🎉 新個人紀錄！' : '個人最佳：' + best;
-    $('#overTitle').textContent = score >= 3000 ? '消除達人！' : score >= 1500 ? '好犀利！' : '時間到！';
-    $('#stats').innerHTML = '<span>💚 新包裝 ×' + stats.newCleared + '</span><span>🔗 最高連鎖 ' + stats.maxCombo + '</span><span>👆 ' + stats.moves + ' 步</span>';
+    $('#overTitle').textContent = score >= 45 ? '消除達人！' : score >= 30 ? '好犀利！' : '時間到！';
+    $('#stats').innerHTML = '<span>✨ 消除 ' + stats.clears + ' 次</span><span>🔗 最高連鎖 ' + stats.maxCombo + '</span><span>👆 ' + stats.moves + ' 步</span>';
     resetForm();
     show('over');
   }
 
-  const resetForm = bindSubmit($('#submitForm'), GAME, () => score, (res, name) => openLb(res.top, name, res.best));
+  const resetForm = bindSubmit($('#submitForm'), GAME, () => score);
 
   function openLb(rows, name, sc) {
     $('#lbModal').hidden = false;

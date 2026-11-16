@@ -118,7 +118,7 @@
     show('over');
   }
 
-  const resetForm = bindSubmit($('#submitForm'), GAME, () => score, (res, name) => openLb(res.top, name, res.best));
+  const resetForm = bindSubmit($('#submitForm'), GAME, () => score);
 
   function openLb(rows, name, sc) {
     $('#lbModal').hidden = false;
