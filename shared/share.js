@@ -8,7 +8,6 @@
   const UNITS = { fly: '過咗 {n} 關', match: '消除咗 {n} 次', stack: '疊咗 {n} 層' };
   const base = document.querySelector('script[src*="share.js"]').src.replace(/share\.js.*$/, '');
   const siteUrl = base.replace(/shared\/$/, '');
-  const shortUrl = siteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
   const W = 1080, H = 1920;
   const C = IP
@@ -118,7 +117,7 @@
     ctx.textAlign = 'left';
     ctx.font = "900 64px 'Noto Sans HK', sans-serif"; ctx.fillStyle = C.ink; ctx.fillText('你都嚟挑戰我！', 130, 1640);
     ctx.font = "700 36px 'Noto Sans HK', sans-serif"; ctx.fillStyle = '#4f6f72'; ctx.fillText('玩遊戲儲積分，換 Laurier 獎品 🎁', 130, 1705);
-    ctx.font = "800 30px 'Baloo 2', sans-serif"; ctx.fillStyle = C.ribbon; ctx.fillText(shortUrl, 130, 1770);
+    ctx.font = "900 40px 'Noto Sans HK', sans-serif"; ctx.fillStyle = C.ribbon; ctx.fillText('掃 QR code 即刻玩 →', 130, 1775);
     if (qrLib) {
       const q = qrLib(0, 'M'); q.addData(shareUrl()); q.make();
       const n = q.getModuleCount(), size = 240, cell = size / n, qx = W - 130 - size, qy = 1565;
