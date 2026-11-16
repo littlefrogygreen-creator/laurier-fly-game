@@ -181,6 +181,9 @@
   function renderBoard(el, rows, highlightName, highlightScore) {
     if (!rows || !rows.length) { el.innerHTML = '<li class="lb-empty">未有紀錄，快啲做第一名！</li>'; return; }
     const medal = ['🥇', '🥈', '🥉'];
+    // one row per nickname (its highest score), even if the same name was used on several phones
+    const seen = new Set();
+    rows = rows.filter((r) => { const k = String(r.name).replace(/\s+/g, '').toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
     let marked = false;
     el.innerHTML = rows.map((r, i) => {
       const me = !marked && highlightName != null && r.name === highlightName && r.score === highlightScore;

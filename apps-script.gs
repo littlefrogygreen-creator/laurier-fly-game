@@ -86,7 +86,7 @@ function submit_(d) {
     lock.releaseLock();
   }
   var sorted = ranking_(game), rank = 0, monthBest = score;
-  for (var j = 0; j < sorted.length; j++) if (sorted[j].pid === pid) { rank = j + 1; monthBest = sorted[j].score; break; }
+  for (var j = 0; j < sorted.length; j++) if (sorted[j].key === nameKey_(name)) { rank = j + 1; monthBest = sorted[j].score; break; }
   return json_({ ok: true, rank: rank, best: monthBest, total: earned, top: sorted.slice(0, TOP_N).map(publicRow_) });
 }
 
@@ -100,20 +100,24 @@ function players_() {
   return out;
 }
 
-/** This month's best score per player for one game (all time when MONTHLY is false), highest first. */
+/** This month's best score per nickname for one game (all time when MONTHLY is false), highest first.
+    The same nickname appears once even when it was used on several phones. */
 function ranking_(game) {
   var v = scoreSheet_().getDataRange().getValues(), bestBy = {}, now = month_(new Date());
   for (var i = 1; i < v.length; i++) {
     if (v[i][1] !== game) continue;
     if (MONTHLY && !(v[i][0] instanceof Date && month_(v[i][0]) === now)) continue;
-    var pid = String(v[i][3]), score = Number(v[i][4]) || 0, t = v[i][0] instanceof Date ? v[i][0].getTime() : 0;
-    var cur = bestBy[pid];
-    if (score > 0 && (!cur || score > cur.score)) bestBy[pid] = { pid: pid, name: String(v[i][2]).replace(/^'/, ''), score: score, t: t };
+    var name = String(v[i][2]).replace(/^'/, ''), key = nameKey_(name);
+    var score = Number(v[i][4]) || 0, t = v[i][0] instanceof Date ? v[i][0].getTime() : 0;
+    var cur = bestBy[key];
+    if (score > 0 && (!cur || score > cur.score)) bestBy[key] = { key: key, pid: String(v[i][3]), name: name, score: score, t: t };
   }
   var list = Object.keys(bestBy).map(function (k) { return bestBy[k]; });
   list.sort(function (a, b) { return b.score - a.score || a.t - b.t; });
   return list;
 }
+
+function nameKey_(name) { return String(name).replace(/\s+/g, '').toLowerCase(); }
 
 function board_(game) { return ranking_(game).slice(0, TOP_N).map(publicRow_); }
 function publicRow_(r) { return { name: r.name, score: r.score }; }
