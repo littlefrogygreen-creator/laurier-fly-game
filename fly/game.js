@@ -102,6 +102,13 @@
     Audio.unlock(); Audio.start();
     reset(); state = 'ready';
     show(null); $('#hud').hidden = false; $('#tip').hidden = false;
+    // first game on this phone: introduce the new pack, then the tap starts the flight
+    const S = window.Laurier.Spotlight;
+    if (S && !S.seen(GAME)) {
+      $('#tip').hidden = true;
+      const f = () => canvas.clientHeight / H;
+      S.show(GAME, () => ({ x: P.x * f(), y: P.y * f(), r: P.w * .95 * f() }), () => { $('#tip').hidden = false; flap(); }, '點擊屏幕開始飛');
+    }
   }
   $('#play').addEventListener('click', startGame);
   $('#again').addEventListener('click', startGame);

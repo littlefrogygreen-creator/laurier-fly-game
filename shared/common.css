@@ -282,3 +282,35 @@ html.ip .share-btn { background: linear-gradient(135deg, #feda75, #fa7e1e 30%, #
 .share-actions .btn { width: 100%; font-size: 18px; padding: 12px 16px; text-align: center; text-decoration: none; }
 .share-actions [data-act=share] { background: linear-gradient(135deg, #feda75, #fa7e1e 30%, #d62976 60%, #962fbf 85%, #4f5bd5); box-shadow: 0 6px 0 #8a2470; }
 .share-msg { text-align: center; color: var(--teal-dark) !important; font-weight: 700; font-size: 13.5px; min-height: 18px; }
+
+/* ---------- 新包裝 spotlight (first game only) ---------- */
+.spot { position: fixed; inset: 0; z-index: 90; cursor: pointer; opacity: 0; transition: opacity .25s; touch-action: none; }
+.spot.in { opacity: 1; } .spot.out { opacity: 0; }
+.spot-hole { position: absolute; border-radius: 50%; box-shadow: 0 0 0 200vmax rgba(0, 20, 25, .72); pointer-events: none; }
+.spot-ring { position: absolute; border-radius: 50%; border: 5px solid #fff; box-shadow: 0 0 0 6px rgba(255,216,77,.85), 0 0 26px 8px rgba(255,216,77,.75); pointer-events: none; animation: spotPulse 1.2s ease-in-out infinite; }
+@keyframes spotPulse { 50% { transform: scale(1.07); box-shadow: 0 0 0 10px rgba(255,216,77,.6), 0 0 40px 14px rgba(255,216,77,.6); } }
+.spot-text { position: absolute; left: 50%; translate: -50% 0; width: min(340px, 88vw); text-align: center; color: #fff; pointer-events: none; }
+.spot-badge { display: inline-block; padding: 2px 12px; border-radius: 99px; font: 800 16px 'Baloo 2', sans-serif; letter-spacing: 2px; color: #fff; background: linear-gradient(180deg, #4fd35a, #22a52e); box-shadow: 0 3px 0 #158a20; animation: pulse 1.2s ease-in-out infinite; }
+.spot-title { display: block; margin: 6px 0 8px; font: 900 34px/1.1 'Noto Sans HK', sans-serif; letter-spacing: 2px; text-shadow: 0 3px 0 rgba(0,0,0,.35); }
+.spot-title em { font-style: normal; font-size: 56px; color: #ffe066; -webkit-text-stroke: 2px #fff; paint-order: stroke fill; text-shadow: 0 4px 0 #e0a800, 0 8px 18px rgba(0,0,0,.4); }
+.spot-tap { display: inline-block; padding: 8px 18px; border-radius: 99px; font: 800 17px 'Noto Sans HK', sans-serif; background: rgba(255,255,255,.18); border: 2px solid rgba(255,255,255,.6); animation: tapBlink 1.4s ease-in-out infinite; }
+@keyframes tapBlink { 50% { opacity: .55; } }
+.spot-arrow { position: absolute; width: 44px; height: 62px; pointer-events: none; }
+.spot-arrow::before { content: ''; position: absolute; left: 15px; width: 14px; height: 34px; border-radius: 7px; background: #ffe066; box-shadow: 0 3px 0 #e0a800; }
+.spot-arrow::after { content: ''; position: absolute; left: 0; width: 0; height: 0; border-left: 22px solid transparent; border-right: 22px solid transparent; }
+.spot-arrow.down::before { top: 0; } .spot-arrow.down::after { top: 30px; border-top: 30px solid #ffe066; }
+.spot-arrow.up::before { bottom: 0; } .spot-arrow.up::after { bottom: 30px; border-bottom: 30px solid #ffe066; }
+.spot-arrow.down { animation: arrowDown .8s ease-in-out infinite; } .spot-arrow.up { animation: arrowUp .8s ease-in-out infinite; }
+@keyframes arrowDown { 50% { translate: 0 10px; } } @keyframes arrowUp { 50% { translate: 0 -10px; } }
+html.ip .spot-ring { box-shadow: 0 0 0 6px rgba(255,143,190,.9), 0 0 26px 8px rgba(255,143,190,.8); }
+html.ip .spot-badge { background: linear-gradient(180deg, #ff8fbe, #e0457b); box-shadow: 0 3px 0 #b8325f; }
+@media (prefers-reduced-motion: reduce) { .spot-ring, .spot-arrow, .spot-tap, .spot-badge { animation: none; } }
+
+/* ---------- 新包裝 as a sticker word ---------- */
+.np {
+  display: inline-block; padding: 0 .28em; margin: 0 .08em; border-radius: .45em; rotate: -3deg;
+  font-family: 'Noto Sans HK', sans-serif; font-weight: 900; color: #fff; letter-spacing: .04em;
+  background: linear-gradient(180deg, #4fd35a, #22a52e); box-shadow: 0 .14em 0 #158a20;
+  text-shadow: 0 .06em 0 rgba(0,0,0,.18);
+}
+html.ip .np { background: linear-gradient(180deg, #ff8fbe, #e0457b); box-shadow: 0 .14em 0 #b8325f; }

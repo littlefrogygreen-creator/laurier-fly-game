@@ -116,3 +116,10 @@ body.hub::after { content: ''; position: fixed; inset: 0; z-index: -1; backgroun
 html.ip .month-tag, html.ip .t-tier { background: #e0457b; }
 html.ip .tiers li { background: #fff0f6; } html.ip .tiers li.ready { background: #ffe1ee; }
 html.ip .pts-bar i { background: linear-gradient(90deg, #ff8fbe, #ffc4da); }
+.np-hero { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 8px; margin: 6px 0 0; }
+.np-line { font: 900 22px 'Noto Sans HK', sans-serif; color: var(--teal-dark); text-shadow: 0 2px 0 #fff; }
+.np-big { font-size: 34px; padding: 2px 14px; rotate: -4deg; animation: npBounce 2.4s ease-in-out infinite; }
+@keyframes npBounce { 0%, 70%, 100% { transform: scale(1); } 80% { transform: scale(1.12); } 90% { transform: scale(.96); } }
+.game-card p .np { font-size: 1.05em; padding: 0 .3em; }
+html.ip .np-line { color: #b8325f; }
+@media (prefers-reduced-motion: reduce) { .np-big { animation: none; } }

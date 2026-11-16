@@ -150,6 +150,13 @@
     Audio.unlock(); Audio.start();
     reset(); state = 'ready';
     show(null); $('#hud').hidden = false; $('#tip').hidden = false;
+    // first game on this phone: introduce the new pack, then the tap starts the game
+    const S = window.Laurier.Spotlight;
+    if (S && !S.seen(GAME)) {
+      $('#tip').hidden = true;
+      const f = () => canvas.clientHeight / H;
+      S.show(GAME, () => cur && ({ x: cur.x * f(), y: (cur.y + cur.h / 2 - camTop) * f(), r: cur.w * .68 * f() }), () => drop(), '點擊屏幕開始遊戲');
+    }
   }
   $('#play').addEventListener('click', startGame);
   $('#again').addEventListener('click', startGame);

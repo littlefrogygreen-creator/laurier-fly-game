@@ -350,6 +350,25 @@
     show('play-screen');
     layout(); freshBoard();
     updateTime();
+    const S = window.Laurier.Spotlight;
+    if (S && !S.seen(GAME)) {
+      // first game on this phone: point at a new-pack tile before the clock starts
+      setTimeout(() => S.show(GAME, newPackSpot, begin, '點擊屏幕開始遊戲'), 800);
+      return;
+    }
+    begin();
+  }
+  /** The new-pack tile nearest the middle of the board, in page pixels. */
+  function newPackSpot() {
+    const b = boardEl.getBoundingClientRect(), cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+    let best = null, bd = Infinity;
+    boardEl.querySelectorAll('.tile.new-pack').forEach((el) => {
+      const r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, d = Math.hypot(x - cx, y - cy);
+      if (d < bd) { bd = d; best = { x, y, r: r.width * .78 }; }
+    });
+    return best;
+  }
+  function begin() {
     playing = true;
     shout('開始！');
     clearInterval(timer);
