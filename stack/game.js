@@ -172,7 +172,7 @@
 
   function openLb(rows, name, sc) {
     $('#lbModal').hidden = false;
-    $('#lbNote').textContent = LB.online ? '排行榜每位玩家只計最高分；手機號碼唔會公開。' : '（示範模式：排行榜暫時只儲存喺呢部裝置）';
+    $('#lbNote').textContent = LB.online ? '計每位玩家當月最高分，每月 1 號重新計。' : '（示範模式：排行榜暫時只儲存喺呢部裝置）';
     if (rows) renderBoard($('#lbList'), rows, name, sc);
     else loadBoard($('#lbList'), GAME);
   }

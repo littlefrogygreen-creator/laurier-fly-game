@@ -35,7 +35,7 @@
 
   async function load() {
     list.innerHTML = '<li class="lb-empty">載入中…</li>';
-    note.textContent = LB.online ? '每位玩家只計最高分。' : '示範模式：排行榜暫時只記錄喺呢部裝置，正式開通後會顯示所有玩家。';
+    note.textContent = LB.online ? '每位玩家只計當月最高分。' : '示範模式：排行榜暫時只記錄喺呢部裝置，正式開通後會顯示所有玩家。';
     try {
       const res = await LB.all();
       if (!res || !res.ok) throw new Error('fail');
