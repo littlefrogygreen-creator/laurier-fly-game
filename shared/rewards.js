@@ -28,17 +28,17 @@
       : next ? '仲差 ' + fmt(next.need - total) + ' 分就換到「' + esc(next.name) + '」'
       : '你已經儲夠分換晒所有獎品！';
     const pct = top ? Math.min(100, total / (next ? next.need : top) * 100) : 0;
-    return '<div class="pts-row"><span class="pts-label">我的累計積分</span><b class="pts">' + fmt(total) + '</b><span>分</span></div>' +
+    return '<div class="pts-row"><span class="pts-label">我的積分</span><b class="pts">' + fmt(total) + '</b><span>分</span></div>' +
       '<p class="pts-next">' + nextText + '</p><div class="pts-bar" aria-hidden="true"><i style="width:' + pct + '%"></i></div>' +
       '<ul class="tiers">' + list.map((r) => {
-        const state = r.redeemed ? '<span class="t-done">已兌換 ✓</span>'
-          : r.out ? '<span class="t-wait">已換完</span>'
+        // points are deducted on each redemption, so a reward can be redeemed again once there are enough points
+        const state = r.out ? '<span class="t-wait">已換完</span>'
           : total >= r.need ? '<button class="btn small" type="button" data-tier="' + esc(r.tier) + '">兌換</button>'
           : '<span class="t-wait">差 ' + fmt(r.need - total) + ' 分</span>';
-        return '<li class="' + (total >= r.need && !r.redeemed ? 'ready' : '') + '"><span class="t-tier">' + esc(r.tier) + '</span>' +
-          '<span class="t-info"><b>' + esc(r.name) + '</b><small>需要 ' + fmt(r.need) + ' 分</small></span>' + state + '</li>';
+        return '<li class="' + (total >= r.need && !r.out ? 'ready' : '') + '"><span class="t-tier">' + esc(r.tier) + '</span>' +
+          '<span class="t-info"><b>' + esc(r.name) + '</b><small>' + fmt(r.need) + ' 分' + (r.times ? ' · 已換 ' + r.times + ' 次' : '') + '</small></span>' + state + '</li>';
       }).join('') + '</ul>' +
-      '<p class="lb-note">玩遊戲每得 1 分，累計積分就加 1 分。積分全年累計，換獎唔會扣分；換獎時先需要留手機號碼。</p>';
+      '<p class="lb-note">玩遊戲每得 1 分，積分就加 1 分。積分唔會每月清零；換獎會扣除所需積分，扣完再儲就可以再換。換獎時先需要留手機號碼。</p>';
   }
 
   function bindTiers(root) {
@@ -79,7 +79,8 @@
       '<label for="redeemPhone">手機號碼（唔會公開，只用嚟聯絡你領獎）</label>' +
       '<input id="redeemPhone" type="tel" inputmode="numeric" maxlength="8" placeholder="8 位數字" autocomplete="tel-national">' +
       '<label class="agree"><input type="checkbox" name="agree"> 我同意提供手機號碼，只用作聯絡及安排領獎。</label>' +
-      '<button class="btn teal small" type="submit">確認兌換</button></div><p class="form-msg"></p>' +
+      '<p class="redeem-cost">兌換後會扣除 <b>' + fmt(r.need) + '</b> 分，剩餘 <b>' + fmt(Math.max(0, total - r.need)) + '</b> 分</p>' +
+      '<button class="btn teal small" type="submit">確認兌換（扣 ' + fmt(r.need) + ' 分）</button></div><p class="form-msg"></p>' +
       '<button class="link-btn" type="button" data-back>返回獎品清單</button></form>';
     const f = body.querySelector('form'), input = f.querySelector('input[type=tel]'), agree = f.querySelector('[name=agree]'), m = f.querySelector('.form-msg');
     input.value = store.get('laurier_phone', '');
@@ -95,13 +96,16 @@
       if (res && res.ok) {
         store.set('laurier_phone', phone);
         body.dataset.view = 'done';
-        body.innerHTML = '<p class="redeem-ok">✅ 兌換成功！<br><b>' + esc(r.name) + '</b><br><small>我哋會用你留低嘅手機號碼聯絡你領獎。</small></p>' +
-          '<button class="btn small" type="button" data-close>完成</button>';
+        if (typeof res.total === 'number') { total = res.total; store.set('laurier_total', total); paintAll(); }
+        body.innerHTML = '<p class="redeem-ok">✅ 兌換成功！<br><b>' + esc(r.name) + '</b><br><small>' +
+          (res.cost ? '已扣 ' + fmt(res.cost) + ' 分，剩餘 ' + fmt(total) + ' 分。<br>' : '') + '我哋會用你留低嘅手機號碼聯絡你領獎。</small></p>' +
+          '<button class="btn small" type="button" data-close>完成</button><button class="link-btn" type="button" data-back>返回獎品清單</button>';
+        body.querySelector('[data-back]').onclick = open;
         refresh();
         return;
       }
       f.querySelector('[type=submit]').disabled = false;
-      const why = { already: '你（或者呢個手機號碼）已經換過呢款獎品。', not_enough: '積分未夠，再玩多幾局！', out: '呢款獎品已經換完。', phone: '請輸入 8 位數香港手機號碼' };
+      const why = { already: '你（或者呢個手機號碼）已經換過呢款獎品。', not_enough: '積分唔夠，再玩多幾局！', out: '呢款獎品已經換完。', phone: '請輸入 8 位數香港手機號碼' };
       m.textContent = (res && why[res.error]) || '兌換失敗，請檢查網絡再試';
     });
   }

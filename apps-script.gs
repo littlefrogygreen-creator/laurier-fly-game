@@ -8,15 +8,15 @@
  * 玩法：
  *   - 每款遊戲每得 1 分，玩家嘅「累計分數」就加 1 分（三款遊戲加埋計）。
  *   - 排行榜：每個月（香港時間每月 1 號 00:00）重新計，計每位玩家喺當月嘅最高分。每個月換一款遊戲。
- *   - 累計分數唔會每月清零，全年累計；夠分就可以兌換「Rewards」分頁入面嘅獎品，
- *     每款獎品每人（每部手機、每個電話號碼）限換一次，換獎唔會扣分。
+ *   - 積分唔會每月清零；夠分就可以兌換「Rewards」分頁入面嘅獎品。
+ *     換獎會扣除所需積分（可用積分 = 累計賺取 − 已兌換扣除），扣完再儲就可以再換，冇次數限制。
  *   - 上榜只需要暱稱；兌換獎品先需要手機號碼。
  *
  * 分頁：
- *   Players  每位玩家一行（玩家編號、暱稱、累計分數、三款遊戲最高分）
+ *   Players  每位玩家一行（玩家編號、暱稱、累計賺取分數、三款遊戲最高分）
  *   Scores   每次提交分數嘅紀錄（時間、遊戲、暱稱、玩家編號、分數）
  *   Rewards  獎品，由你自己改（級別、獎品、所需累計分數、剩餘數量）
- *   Redeem   兌換紀錄（時間、級別、獎品、暱稱、玩家編號、累計分數、手機、狀態）
+ *   Redeem   兌換紀錄（時間、級別、獎品、暱稱、玩家編號、兌換前可用積分、手機、狀態、扣除積分）
  */
 
 var GAMES = { fly: { col: 4, max: 600 }, match: { col: 5, max: 200 }, stack: { col: 6, max: 600 } };  // max = 一局最高可能分數
@@ -33,10 +33,10 @@ function doGet(e) {
   if (game === 'all') {
     var boards = {};
     Object.keys(GAMES).forEach(function (g) { boards[g] = board_(g); });
-    return json_({ ok: true, boards: boards, month: month_(new Date()), v: 5 });
+    return json_({ ok: true, boards: boards, month: month_(new Date()), v: 6 });
   }
   if (!GAMES[game]) return json_({ ok: false, error: 'bad game' });
-  return json_({ ok: true, top: board_(game), month: month_(new Date()), v: 5 });
+  return json_({ ok: true, top: board_(game), month: month_(new Date()), v: 6 });
 }
 
 function doPost(e) {
@@ -87,7 +87,7 @@ function submit_(d) {
   }
   var sorted = ranking_(game), rank = 0, monthBest = score;
   for (var j = 0; j < sorted.length; j++) if (sorted[j].key === nameKey_(name)) { rank = j + 1; monthBest = sorted[j].score; break; }
-  return json_({ ok: true, rank: rank, best: monthBest, total: earned, top: sorted.slice(0, TOP_N).map(publicRow_) });
+  return json_({ ok: true, rank: rank, best: monthBest, total: earned - spent_(pid), earned: earned, top: sorted.slice(0, TOP_N).map(publicRow_) });
 }
 
 function players_() {
@@ -133,11 +133,11 @@ function me_(d) {
   if (!pid) return json_({ ok: false, error: 'pid' });
   var me = null;
   players_().forEach(function (p) { if (p.pid === pid) me = p; });
-  var mine = redeemed_(pid, '');
+  var count = redeemCount_(pid), earned = me ? me.earned : 0;
   return json_({
-    ok: true, total: me ? me.earned : 0,
+    ok: true, total: earned - spent_(pid), earned: earned, spend: true,
     best: me ? { fly: me.fly, match: me.match, stack: me.stack } : { fly: 0, match: 0, stack: 0 },
-    rewards: rewards_().map(function (r) { var o = publicReward_(r); o.redeemed = !!mine[r.tier]; return o; }),
+    rewards: rewards_().map(function (r) { var o = publicReward_(r); o.times = count[r.tier] || 0; return o; }),
   });
 }
 
@@ -155,24 +155,29 @@ function redeem_(d) {
     rewards_().forEach(function (r) { if (r.tier === tier) reward = r; });
     if (!reward) return json_({ ok: false, error: 'bad reward' });
     players_().forEach(function (p) { if (p.pid === pid) me = p; });
-    if (!me || me.earned < reward.need) return json_({ ok: false, error: 'not_enough' });
-    if (redeemed_(pid, phone)[tier]) return json_({ ok: false, error: 'already' });
+    var balance = me ? me.earned - spent_(pid) : 0;
+    if (!me || balance < reward.need) return json_({ ok: false, error: 'not_enough', total: balance });
     if (reward.stock !== null && reward.stock <= 0) return json_({ ok: false, error: 'out' });
 
     if (reward.stock !== null) rewardSheet_().getRange(reward.row, 4).setValue(reward.stock - 1);
-    redeemSheet_().appendRow([new Date(), tier, reward.name, safe_(me.name), "'" + pid, me.earned, "'" + phone, '']);
-    return json_({ ok: true, tier: tier, name: reward.name });
+    redeemSheet_().appendRow([new Date(), tier, reward.name, safe_(me.name), "'" + pid, balance, "'" + phone, '', reward.need]);
+    return json_({ ok: true, tier: tier, name: reward.name, cost: reward.need, total: balance - reward.need });
   } finally {
     lock.releaseLock();
   }
 }
 
-/** Tiers already redeemed by this player or this phone number: { 'Tier 1': true, ... } */
-function redeemed_(pid, phone) {
+/** Points this player has spent on rewards (rows from before points were deducted count as 0). */
+function spent_(pid) {
+  var v = redeemSheet_().getDataRange().getValues(), n = 0;
+  for (var i = 1; i < v.length; i++) if (String(v[i][4]) === pid) n += Number(v[i][8]) || 0;
+  return n;
+}
+
+/** How many times this player has redeemed each tier: { 'Tier 4': 2, ... } */
+function redeemCount_(pid) {
   var v = redeemSheet_().getDataRange().getValues(), out = {};
-  for (var i = 1; i < v.length; i++) {
-    if (String(v[i][4]) === pid || (phone && String(v[i][6]).replace(/\D/g, '') === phone)) out[String(v[i][1])] = true;
-  }
+  for (var i = 1; i < v.length; i++) if (String(v[i][4]) === pid) out[String(v[i][1])] = (out[String(v[i][1])] || 0) + 1;
   return out;
 }
 
@@ -202,7 +207,11 @@ function safe_(name) { return /^[=+\-@]/.test(name) ? "'" + name : name; }
 
 function playerSheet_() { return getSheet_('Players', ['玩家編號', '暱稱', '累計分數', '飛飛挑戰最高', '消消樂最高', '層層疊最高', '最後提交時間', '加入時間']); }
 function scoreSheet_() { return getSheet_('Scores', ['時間', '遊戲', '暱稱', '玩家編號', '分數']); }
-function redeemSheet_() { return getSheet_('Redeem', ['時間', '級別', '獎品', '暱稱', '玩家編號', '兌換時累計分數', '手機', '狀態（自己填，例如：已發）']); }
+function redeemSheet_() {
+  var sh = getSheet_('Redeem', ['時間', '級別', '獎品', '暱稱', '玩家編號', '兌換前可用積分', '手機', '狀態（自己填，例如：已發）', '扣除積分']);
+  if (sh.getRange(1, 9).getValue() !== '扣除積分') { sh.getRange(1, 9).setValue('扣除積分'); sh.getRange(1, 6).setValue('兌換前可用積分'); }  // older sheet
+  return sh;
+}
 
 /** Created with the four tiers the first time; edit the rows in the sheet. */
 function rewardSheet_() {

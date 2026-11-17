@@ -314,3 +314,5 @@ html.ip .spot-badge { background: linear-gradient(180deg, #ff8fbe, #e0457b); box
   text-shadow: 0 .06em 0 rgba(0,0,0,.18);
 }
 html.ip .np { background: linear-gradient(180deg, #ff8fbe, #e0457b); box-shadow: 0 .14em 0 #b8325f; }
+.redeem-cost { margin: 10px 0 0; padding: 8px 10px; border-radius: 12px; background: #fff4c2; font-weight: 700; font-size: 14px; text-align: center; color: #6b3a00; }
+.redeem-cost b { font-size: 17px; }
